@@ -1,0 +1,16 @@
+{
+    "metadata": {
+        "vehicle": "",
+        "sw_ver": "",
+        "test_date": "2026-01-30"
+    },
+    "rules": [
+        {
+            "start_time": -3.54166861633573,
+            "end_time": 30.590513863225752,
+            "topic": "stOmsResult.u8OSM_1stRow_DrvOOP",
+            "target_value": "0",
+            "rule_type": "Exist"
+        }
+    ]
+}

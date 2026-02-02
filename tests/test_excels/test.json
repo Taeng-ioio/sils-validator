@@ -1,0 +1,23 @@
+{
+    "metadata": {
+        "vehicle": "",
+        "sw_ver": "",
+        "test_date": "2026-01-30"
+    },
+    "rules": [
+        {
+            "start_time": 2.0446320218707834,
+            "end_time": 17.00558730613804,
+            "topic": "stOmsResult.u8ICMU_1stRow_DrvAbusePopUpReq",
+            "target_value": "0",
+            "rule_type": "Exist"
+        },
+        {
+            "start_time": 7.625976119237371,
+            "end_time": 9.09215916036404,
+            "topic": "stDmsResult.u8ICC_AoIStat",
+            "target_value": "0",
+            "rule_type": "Must"
+        }
+    ]
+}

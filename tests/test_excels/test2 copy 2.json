@@ -1,0 +1,16 @@
+{
+    "metadata": {
+        "vehicle": "QV1",
+        "sw_ver": "5.2.51",
+        "test_date": "2026-01-29"
+    },
+    "rules": [
+        {
+            "start_time": 0.0,
+            "end_time": 5.525114868710814,
+            "topic": "stDmsResult.u8ICC_AoIStat",
+            "target_value": "1",
+            "rule_type": "Must"
+        }
+    ]
+}
