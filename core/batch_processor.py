@@ -7,10 +7,10 @@ class BatchProcessor:
     def __init__(self):
         self.results = []
 
-    def run_batch(self, folder_path, progress_callback=None):
+    def run_batch(self, folder_path, inspector_logic, progress_callback=None):
         """
-        Scans folder for .xlsx/.xls files.
-        Looks for corresponding .json config.
+        Scans folder for .xlsx/.xls/.csv files.
+        Looks up config in the provided inspector_logic (Master Config).
         Runs validation.
         Returns list of results.
         
@@ -18,20 +18,20 @@ class BatchProcessor:
         """
         self.results = []
         
-        # Find all excel files recursively
-        excel_files = []
+        # Find all excel/csv files recursively
+        data_files = []
         for root, dirs, files in os.walk(folder_path):
             for file in files:
-                if file.lower().endswith(('.xlsx', '.xls')):
+                if file.lower().endswith(('.xlsx', '.xls', '.csv')):
                     full_path = os.path.join(root, file)
-                    excel_files.append(full_path)
+                    data_files.append(full_path)
         
-        total_files = len(excel_files)
+        total_files = len(data_files)
         
-        for i, excel_path in enumerate(excel_files):
+        for i, file_path in enumerate(data_files):
             # Use relative path 
-            rel_path = os.path.relpath(excel_path, folder_path)
-            json_path = os.path.splitext(excel_path)[0] + ".json"
+            rel_path = os.path.relpath(file_path, folder_path)
+            file_stem = os.path.splitext(os.path.basename(file_path))[0]
             
             result_entry = {
                 "file": rel_path,
@@ -46,35 +46,41 @@ class BatchProcessor:
                 "note": ""
             }
             
-            if not os.path.exists(json_path):
+            # Lookup config in Master
+            config_data = inspector_logic.get_config_for_file(file_stem)
+            
+            if not config_data:
                 result_entry["status"] = "NO_CONFIG"
-                result_entry["details"] = "Config file (.json) not found."
+                result_entry["details"] = "Config not found in Master."
             else:
                 try:
-                    # Load Logic (Config)
-                    logic = InspectorLogic()
-                    logic.load_rules_from_json(json_path)
+                    # Create a TEMPORARY logic instance for this check
+                    # We can't use the main one because it holds state (rules, metadata) 
+                    # that we don't want to mix, although we could reuse it if we are careful.
+                    # Better to create a new instance and populate it from the dict.
+                    temp_logic = InspectorLogic()
+                    temp_logic.load_config_from_dict(config_data)
                     
                     # Extract Metadata
-                    result_entry["vehicle"] = logic.metadata.get("vehicle", "")
-                    result_entry["sw_ver"] = logic.metadata.get("sw_ver", "")
-                    result_entry["test_date"] = logic.metadata.get("test_date", "")
+                    result_entry["vehicle"] = temp_logic.metadata.get("vehicle", "")
+                    result_entry["sw_ver"] = temp_logic.metadata.get("sw_ver", "")
+                    result_entry["test_date"] = temp_logic.metadata.get("test_date", "")
                     
-                    cats = logic.metadata.get("categories", [])
+                    cats = temp_logic.metadata.get("categories", [])
                     if isinstance(cats, list):
                         result_entry["categories"] = " | ".join(cats)
                     else:
                         result_entry["categories"] = str(cats)
                         
-                    result_entry["tc_number"] = logic.metadata.get("tc_number", "")
-                    result_entry["note"] = logic.metadata.get("note", "")
+                    result_entry["tc_number"] = temp_logic.metadata.get("tc_number", "")
+                    result_entry["note"] = temp_logic.metadata.get("note", "")
                     
                     # Load Data
                     loader = ExcelLoader()
-                    loader.load_file(excel_path)
+                    loader.load_file(file_path)
                     
                     # Check Rules
-                    check_results = logic.check_rules(loader)
+                    check_results = temp_logic.check_rules(loader)
                     
                     fail_count = sum(1 for r in check_results if r['status'] == 'FAIL')
                     

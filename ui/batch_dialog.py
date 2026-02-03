@@ -12,13 +12,14 @@ class BatchWorker(QThread):
     progress = pyqtSignal(int, int, dict) # changed str to dict for result_entry
     finished = pyqtSignal(list)
     
-    def __init__(self, folder):
+    def __init__(self, folder, logic):
         super().__init__()
         self.folder = folder
+        self.logic = logic
         self.processor = BatchProcessor()
         
     def run(self):
-        results = self.processor.run_batch(self.folder, self.emit_progress)
+        results = self.processor.run_batch(self.folder, self.logic, self.emit_progress)
         self.finished.emit(results)
         
     def emit_progress(self, current, total, result):
@@ -94,15 +95,15 @@ class BatchResultDialog(QDialog):
         self.table.setRowCount(0)
         self.file_row_map = {}
         
-        excel_files = []
+        data_files = []
         for root, dirs, files in os.walk(folder):
             for file in files:
-                if file.lower().endswith(('.xlsx', '.xls')):
+                if file.lower().endswith(('.xlsx', '.xls', '.csv')):
                     full_path = os.path.join(root, file)
-                    excel_files.append(full_path)
+                    data_files.append(full_path)
         
-        self.table.setRowCount(len(excel_files))
-        for i, path in enumerate(excel_files):
+        self.table.setRowCount(len(data_files))
+        for i, path in enumerate(data_files):
             rel_path = os.path.relpath(path, folder)
             self.file_row_map[rel_path] = i
             
@@ -121,7 +122,8 @@ class BatchResultDialog(QDialog):
         self.progress_bar.setValue(0)
         self.status_label.setText("Starting...")
         
-        self.worker = BatchWorker(self.selected_folder)
+        # Pass inspector logic from main window
+        self.worker = BatchWorker(self.selected_folder, self.parent().inspector_logic)
         self.worker.progress.connect(self.update_progress)
         self.worker.finished.connect(self.on_finished)
         self.worker.start()

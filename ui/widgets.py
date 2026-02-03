@@ -86,16 +86,23 @@ class TimelineWidget(QWidget):
         plot_map: { "topic_name": plot_id (int), ... }
                   If None, all go to plot 1.
         """
-        self.plot_layout.clear()
-        self.plots = []
-        self.ref_plot = None
-        
-        # Remove items from previous usage to be safe
+        # Remove items from previous usage to be safe (BEFORE clearing layout)
+        if self.ref_plot is not None:
+            try:
+                self.ref_plot.removeItem(self.time_line)
+                self.ref_plot.removeItem(self.region_item)
+            except:
+                pass
+
         if self.time_line.scene() is not None:
              self.time_line.scene().removeItem(self.time_line)
         if self.region_item.scene() is not None:
              self.region_item.scene().removeItem(self.region_item)
 
+        self.plot_layout.clear()
+        self.plots = []
+        self.ref_plot = None
+        
         if not data_dict:
             return
 

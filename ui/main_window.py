@@ -45,13 +45,18 @@ class MainWindow(QMainWindow):
         # We can style the file label to look better
         self.file_label = QLabel("No file loaded")
         self.file_label.setStyleSheet("color: #666; font-style: italic; margin-left: 10px;")
-        
+        # Load Master Config Button
+        master_btn = QPushButton("Load Master Config")
+        master_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        master_btn.clicked.connect(self.open_master_config_dialog)
+
+        # Load Excel Button
         load_btn = QPushButton("Select Excel File")
         load_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         load_btn.clicked.connect(self.load_excel_file)
         
-        # Save Config Button (Auto Name)
-        save_btn = QPushButton("Save Config (Auto)")
+        # Save Config Button
+        save_btn = QPushButton("Save Master Config")
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.clicked.connect(self.save_config)
         
@@ -116,13 +121,15 @@ class MainWindow(QMainWindow):
         cat_layout.addWidget(self.input_category_combo)
         
         add_cat_btn = QPushButton("Add")
-        add_cat_btn.setFixedWidth(50)
+        add_cat_btn.setFixedWidth(80) 
         add_cat_btn.clicked.connect(self.add_category)
         cat_layout.addWidget(add_cat_btn)
         test_info_layout.addLayout(cat_layout)
 
         self.category_list = QListWidget()
-        self.category_list.setFixedHeight(80) # Small height
+        self.category_list.setFixedHeight(80)
+        # Reduce item height/padding
+        self.category_list.setStyleSheet("QListWidget::item { height: 20px; padding: 0px; }")
         test_info_layout.addWidget(self.category_list)
         
         del_cat_btn = QPushButton("Delete Category")
@@ -164,7 +171,10 @@ class MainWindow(QMainWindow):
         self.topic_table.setColumnCount(2)
         self.topic_table.setHorizontalHeaderLabels(["Topic Name", "Plot #"])
         self.topic_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.topic_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.topic_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+        self.topic_table.setColumnWidth(1, 120)
+        # Increase row height for better clickability
+        self.topic_table.verticalHeader().setDefaultSectionSize(45)
         self.topic_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         left_layout.addWidget(self.topic_table)
         
@@ -301,6 +311,12 @@ class MainWindow(QMainWindow):
         add_rule_btn.clicked.connect(self.add_rule)
         type_layout.addWidget(add_rule_btn)
         
+        # Macro Setup Button
+        macro_btn = QPushButton("Macro Setup")
+        macro_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        macro_btn.clicked.connect(self.open_macro_dialog)
+        type_layout.addWidget(macro_btn)
+        
         rule_layout.addLayout(type_layout)
         
         # Rules List Table
@@ -424,6 +440,43 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.warning(self, "Result", f"{fail_count} rules FAILED.\n\n{msg}")
 
+    def open_master_config_dialog(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Master Config", "", "JSON Files (*.json)")
+        if file_name:
+            try:
+                self.inspector_logic.load_master_config(file_name)
+                QMessageBox.information(self, "Success", f"Master Config loaded:\n{os.path.basename(file_name)}")
+                # If an excel file is already open, try to reload its config from the new master
+                if self.current_excel_path:
+                     self._load_config_for_current_excel()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load master config: {e}")
+
+    def open_macro_dialog(self):
+        dlg = MacroDialog(self)
+        if dlg.exec():
+            macro = dlg.selected_macro
+            if macro:
+                # Add Rule from Macro
+                # We need to construct a Rule object
+                # Start/End/Value/Type/Topic
+                try:
+                    rule = Rule(
+                        macro['start'],
+                        macro['end'],
+                        macro['topic'],
+                        macro['value'],
+                        macro['rule_type']
+                    )
+                    self.inspector_logic.add_rule(rule)
+                    self.refresh_rules_table()
+                    # Optional: Auto-add topic to table if not present?
+                    self.add_topic_to_table(macro['topic'])
+                    
+                    QMessageBox.information(self, "Success", f"Macro '{macro['name']}' applied.")
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Failed to apply macro: {e}")
+
     def save_config(self):
         if not self.current_excel_path:
              QMessageBox.warning(self, "Error", "No Excel file loaded.")
@@ -440,18 +493,26 @@ class MainWindow(QMainWindow):
         self.inspector_logic.metadata["tc_number"] = self.input_tc_num.text()
         self.inspector_logic.metadata["note"] = self.input_note.toPlainText()
 
-        # Replace extension with .json
-        base_name = os.path.splitext(self.current_excel_path)[0]
-        json_path = base_name + ".json"
-        
+        # Check if master config is loaded
+        if not self.inspector_logic.master_config_path:
+             # Prompt to create/save master config
+             file_name, _ = QFileDialog.getSaveFileName(self, "Create Master Config", "master_config.json", "JSON Files (*.json)")
+             if file_name:
+                 self.inspector_logic.master_config_path = file_name
+                 self.inspector_logic.master_config_data = {} # Initialize empty
+             else:
+                 return # Cancelled
+
+        # Save to Master Config
         try:
-            self.inspector_logic.save_rules_to_json(json_path)
-            QMessageBox.information(self, "Success", f"Configuration saved to:\n{os.path.basename(json_path)}")
+            file_stem = os.path.splitext(os.path.basename(self.current_excel_path))[0]
+            self.inspector_logic.update_master_config(file_stem)
+            QMessageBox.information(self, "Success", f"Configuration for '{file_stem}' saved to master config.")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to save to master config: {e}")
 
     def load_excel_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xlsx *.xls)")
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel/CSV Files (*.xlsx *.xls *.csv)")
         if file_name:
             self._load_file_from_path(file_name)
 
@@ -573,60 +634,70 @@ class MainWindow(QMainWindow):
             time_axis = self.data_loader.get_time_axis()
             self.timeline.set_time_axis(time_axis)
             
-            # Auto Load Config if exists
-            base_name = os.path.splitext(file_name)[0]
-            json_path = base_name + ".json"
-            if os.path.exists(json_path):
-                try:
-                    self.inspector_logic.load_rules_from_json(json_path)
-                    self.refresh_rules_table()
-                    
-                    # Load Metadata to UI
-                    meta = self.inspector_logic.metadata
-                    self.input_vehicle.setText(meta.get("vehicle", ""))
-                    self.input_sw_ver.setText(meta.get("sw_ver", ""))
-                    
-                    date_str = meta.get("test_date", "")
-                    if date_str:
-                        self.input_date.setDate(QDate.fromString(date_str, Qt.DateFormat.ISODate))
-                    else:
-                        self.input_date.setDate(QDate.currentDate())
-                        
-                    # Extended Metadata
-                    self.category_list.clear() # Clear list first
-                    for cat in meta.get("categories", []):
-                        self.category_list.addItem(cat)
-                    
-                    self.input_tc_num.setText(meta.get("tc_number", ""))
-                    self.input_note.setPlainText(meta.get("note", ""))
-                    
-                    # Auto-add topics from rules to the plot table
-                    # We can infer topics from rules
-                    rule_topics = set(r.topic for r in self.inspector_logic.rules)
-                    for topic in rule_topics:
-                        self.add_topic_to_table(topic)
-                        
-                    QMessageBox.information(self, "Success", f"Loaded {os.path.basename(file_name)}\nand configuration {os.path.basename(json_path)}")
-                except Exception as e:
-                     QMessageBox.warning(self, "Warning", f"Loaded Excel but failed to load config: {e}")
-            else:
-                # Clear/Default UI if no config
-                self.inspector_logic.metadata = {
-                    "vehicle": "", "sw_ver": "", "test_date": "",
-                    "categories": [], "tc_number": "", "note": ""
-                }
-                self.input_vehicle.clear()
-                self.input_sw_ver.clear()
-                self.input_date.setDate(QDate.currentDate())
-                self.category_list.clear()
-                self.input_tc_num.clear()
-                self.input_note.clear()
-                self.refresh_rules_table() # Clear rules
-                
-                QMessageBox.information(self, "Success", f"Loaded {os.path.basename(file_name)} successfully.\n(No config found)")
+            # Load Config from Master if available
+            self._load_config_for_current_excel()
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
+
+    def _load_config_for_current_excel(self):
+        if not self.current_excel_path:
+            return
+            
+        file_stem = os.path.splitext(os.path.basename(self.current_excel_path))[0]
+        config_data = self.inspector_logic.get_config_for_file(file_stem)
+        
+        if config_data:
+            try:
+                self.inspector_logic.load_config_from_dict(config_data)
+                self.refresh_rules_table()
+                
+                # Load Metadata to UI
+                meta = self.inspector_logic.metadata
+                self.input_vehicle.setText(meta.get("vehicle", ""))
+                self.input_sw_ver.setText(meta.get("sw_ver", ""))
+                
+                date_str = meta.get("test_date", "")
+                if date_str:
+                    self.input_date.setDate(QDate.fromString(date_str, Qt.DateFormat.ISODate))
+                else:
+                    self.input_date.setDate(QDate.currentDate())
+                    
+                # Extended Metadata
+                self.category_list.clear() # Clear list first
+                for cat in meta.get("categories", []):
+                    self.category_list.addItem(cat)
+                
+                self.input_tc_num.setText(meta.get("tc_number", ""))
+                self.input_note.setPlainText(meta.get("note", ""))
+                
+                # Auto-add topics from rules to the plot table
+                # We can infer topics from rules
+                rule_topics = set(r.topic for r in self.inspector_logic.rules)
+                for topic in rule_topics:
+                    self.add_topic_to_table(topic)
+                    
+                # Note: We don't show success msg for auto-load to avoid spam, 
+                # unless explicitly requested or if it's the first load
+                print(f"Loaded config for {file_stem} from master.")
+
+            except Exception as e:
+                 QMessageBox.warning(self, "Warning", f"Found config in master but failed to load: {e}")
+        else:
+            # Clear/Default UI if no config
+            self.inspector_logic.metadata = {
+                "vehicle": "", "sw_ver": "", "test_date": "",
+                "categories": [], "tc_number": "", "note": ""
+            }
+            self.input_vehicle.clear()
+            self.input_sw_ver.clear()
+            self.input_date.setDate(QDate.currentDate())
+            self.category_list.clear()
+            self.input_tc_num.clear()
+            self.input_note.clear()
+            self.refresh_rules_table() # Clear rules
+            
+            # QMessageBox.information(self, "Info", f"No config found for {file_stem} in master config.")
 
     def add_topic_to_table(self, topic, plot_id=1):
         if not topic: return

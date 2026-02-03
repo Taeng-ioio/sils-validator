@@ -41,6 +41,10 @@ class InspectorLogic:
             "tc_number": "",
             "note": ""
         }
+        
+        # Centralized Master Config
+        self.master_config_path = None
+        self.master_config_data = {} # { "filename_stem": { "metadata": {}, "rules": [] } }
 
     def add_rule(self, rule):
         self.rules.append(rule)
@@ -126,33 +130,63 @@ class InspectorLogic:
             
         return results
 
-    def save_rules_to_json(self, filepath):
+    def load_master_config(self, path):
+        """Loads the master JSON file containing all configurations."""
+        import os
         import json
-        
-        # New format: { "metadata": {...}, "rules": [...] }
-        export_data = {
+        if not os.path.exists(path):
+            # If not exists, just init empty and set path
+            self.master_config_data = {}
+            self.master_config_path = path
+            return
+
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                self.master_config_data = json.load(f)
+            self.master_config_path = path
+        except Exception as e:
+            raise Exception(f"Failed to load master config: {e}")
+
+    def get_config_for_file(self, file_stem):
+        """Retrieves config dict for a specific file stem from master data."""
+        return self.master_config_data.get(file_stem, None)
+
+    def update_master_config(self, file_stem):
+        """Updates the master data with current rules/metadata for file_stem and saves to disk."""
+        import os
+        import json
+        if not self.master_config_path:
+            raise ValueError("Master config path is not set.")
+            
+        entry = {
             "metadata": self.metadata,
-            "rules": [r.to_dict() for r in self.rules]
+            "rules": [rule.to_dict() for rule in self.rules]
         }
         
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(export_data, f, indent=4)
-
-    def load_rules_from_json(self, filepath):
-        import json
-        with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        self.master_config_data[file_stem] = entry
         
-        # Check if new format or old list format
+        # Save to disk
+        try:
+            with open(self.master_config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.master_config_data, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            raise Exception(f"Failed to save master config: {e}")
+
+    def load_config_from_dict(self, data):
+        """Loads rules and metadata from a dictionary entry."""
+        if not data:
+            return
+
         if isinstance(data, list):
-            # Old format: just a list of rules
+            # Old Format Support (Just list of rules)
             self.rules = [Rule.from_dict(item) for item in data]
+            # Reset metadata to defaults
             self.metadata = {
                 "vehicle": "", "sw_ver": "", "test_date": "",
                 "categories": [], "tc_number": "", "note": ""
             }
         elif isinstance(data, dict):
-            # New format
+            # New Format
             self.metadata = data.get("metadata", {})
             # Ensure all keys exist (migration)
             defaults = {
@@ -165,3 +199,23 @@ class InspectorLogic:
                     
             rules_data = data.get("rules", [])
             self.rules = [Rule.from_dict(item) for item in rules_data]
+
+    def load_rules_from_json(self, file_path):
+        """Legacy: Load from single JSON file."""
+        import os
+        import json
+        if not os.path.exists(file_path):
+            return 
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            self.load_config_from_dict(data)
+
+    def save_rules_to_json(self, file_path):
+        """Legacy: Save to single JSON file."""
+        import json
+        data = {
+            "metadata": self.metadata,
+            "rules": [rule.to_dict() for rule in self.rules]
+        }
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)

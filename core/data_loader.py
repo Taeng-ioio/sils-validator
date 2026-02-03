@@ -13,8 +13,11 @@ class ExcelLoader:
         """
         try:
             # Load with pandas
-            # Using header=0 to treat the first row as columns (Topic names)
-            self.df = pd.read_excel(file_path, header=0)
+            if file_path.lower().endswith('.csv'):
+                 self.df = pd.read_csv(file_path, header=0)
+            else:
+                 # Using header=0 to treat the first row as columns (Topic names)
+                 self.df = pd.read_excel(file_path, header=0)
             
             # Generate Time Column if not exists (assuming data is contiguous 0.033s steps)
             # Create a new index based time column for internal usage
