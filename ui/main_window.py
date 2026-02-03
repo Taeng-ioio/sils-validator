@@ -9,13 +9,9 @@ from core.data_loader import ExcelLoader
 from core.logic import InspectorLogic, Rule, RuleType
 import os
 
-from PyQt6.QtCore import Qt
-from core.data_loader import ExcelLoader
-from core.logic import InspectorLogic, Rule, RuleType
-import os
-
 from ui.widgets import TimelineWidget
 from ui.batch_dialog import BatchResultDialog
+from ui.macro_dialog import MacroDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
