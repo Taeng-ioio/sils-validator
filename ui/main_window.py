@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
         batch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         batch_btn.clicked.connect(self.open_batch_dialog)
         
+        top_bar.addWidget(master_btn)
         top_bar.addWidget(load_btn)
         top_bar.addWidget(self.file_label)
         top_bar.addStretch()

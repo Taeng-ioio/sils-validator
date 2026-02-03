@@ -9,5 +9,27 @@
             "note": ""
         },
         "rules": []
+    },
+    "test2 copy 3": {
+        "metadata": {
+            "vehicle": "",
+            "sw_ver": "",
+            "test_date": "2026-02-04",
+            "categories": [],
+            "tc_number": "",
+            "note": ""
+        },
+        "rules": []
+    },
+    "test2 copy 7": {
+        "metadata": {
+            "vehicle": "asdf",
+            "sw_ver": "asdf",
+            "test_date": "2026-02-04",
+            "categories": [],
+            "tc_number": "",
+            "note": ""
+        },
+        "rules": []
     }
 }
