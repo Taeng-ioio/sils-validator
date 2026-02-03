@@ -619,8 +619,13 @@ class MainWindow(QMainWindow):
             self.data_loader.load_file(file_name)
             
             # Populate Topic Dropdown
+            topics = self.data_loader.get_topics()
             self.topic_combo.clear()
-            self.topic_combo.addItems(self.data_loader.get_topics())
+            self.topic_combo.addItems(topics)
+            
+            self.rule_topic_combo.clear()
+            self.rule_topic_combo.addItems(topics)
+            self.rule_topic_combo.setCurrentIndex(-1) # No default selection
             
             # Clear current selection
             self.selected_topics = []
