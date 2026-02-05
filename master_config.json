@@ -1,35 +1,315 @@
 {
-    "test2 copy 2": {
-        "metadata": {
-            "vehicle": "",
-            "sw_ver": "",
-            "test_date": "2026-02-04",
-            "categories": [],
-            "tc_number": "",
-            "note": ""
+    "macros": [
+        {
+            "name": "AOIOOP",
+            "description": "-",
+            "rules": [
+                {
+                    "start_time": 3.3432344558197093,
+                    "end_time": 10.589122082583664,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "1",
+                    "rule_type": "Must"
+                },
+                {
+                    "start_time": 11.584696137607828,
+                    "end_time": 18.83058376437178,
+                    "topic": "stOmsResult.u8OSM_1stRow_DrvOOP",
+                    "target_value": "1",
+                    "rule_type": "Must"
+                }
+            ]
         },
-        "rules": []
-    },
-    "test2 copy 3": {
-        "metadata": {
-            "vehicle": "",
-            "sw_ver": "",
-            "test_date": "2026-02-04",
-            "categories": [],
-            "tc_number": "",
-            "note": ""
+        {
+            "name": "as",
+            "description": "",
+            "rules": [
+                {
+                    "start_time": 0.0,
+                    "end_time": 30.0,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "3",
+                    "rule_type": "Must"
+                },
+                {
+                    "start_time": 0.0,
+                    "end_time": 1.0,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stOmsResult.u8OSM_1stRow_DrvOOP"
+                    ],
+                    "target_value": [
+                        "3",
+                        "4"
+                    ],
+                    "rule_type": "Must (OR)"
+                },
+                {
+                    "start_time": 7.852713489250944,
+                    "end_time": 8.852713489250943,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stTopicInfo.u8Reserved2",
+                        "stOmsResult.u8OSM_2ndRow_PassSideSeatbeltStatus"
+                    ],
+                    "target_value": [
+                        "3",
+                        "3",
+                        "1"
+                    ],
+                    "rule_type": "Must (OR)"
+                }
+            ]
+        }
+    ],
+    "files": {
+        "test2 copy 2": {
+            "metadata": {
+                "vehicle": "2",
+                "sw_ver": "2",
+                "test_date": "2026-02-04",
+                "categories": [],
+                "tc_number": "2",
+                "note": "2"
+            },
+            "rules": []
         },
-        "rules": []
-    },
-    "test2 copy 7": {
-        "metadata": {
-            "vehicle": "asdf",
-            "sw_ver": "asdf",
-            "test_date": "2026-02-04",
-            "categories": [],
-            "tc_number": "",
-            "note": ""
+        "test2 copy 3": {
+            "metadata": {
+                "vehicle": "",
+                "sw_ver": "",
+                "test_date": "2026-02-04",
+                "categories": [],
+                "tc_number": "",
+                "note": ""
+            },
+            "rules": []
         },
-        "rules": []
+        "test2 copy 7": {
+            "metadata": {
+                "vehicle": "asdf",
+                "sw_ver": "asdf",
+                "test_date": "2026-02-04",
+                "categories": [],
+                "tc_number": "",
+                "note": ""
+            },
+            "rules": []
+        },
+        "test": {
+            "metadata": {
+                "vehicle": "1",
+                "sw_ver": "1",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "1",
+                "note": "1"
+            },
+            "rules": [
+                {
+                    "start_time": 0.0,
+                    "end_time": 30.0,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "3",
+                    "rule_type": "Must"
+                }
+            ]
+        },
+        "test2": {
+            "metadata": {
+                "vehicle": "22",
+                "sw_ver": "22",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "2",
+                "note": "22"
+            },
+            "rules": []
+        },
+        "test2 copy 10": {
+            "metadata": {
+                "vehicle": "10",
+                "sw_ver": "10",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "1",
+                "note": "1"
+            },
+            "rules": [
+                {
+                    "start_time": 1.0339713190890727,
+                    "end_time": 2.0339713190890727,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stOmsResult.u8OSM_1stRow_DrvOOP"
+                    ],
+                    "target_value": "1 | 0",
+                    "rule_type": "Must (OR)"
+                },
+                {
+                    "start_time": 0.0,
+                    "end_time": 30.0,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "3",
+                    "rule_type": "Must"
+                },
+                {
+                    "start_time": 0.0,
+                    "end_time": 1.0,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stOmsResult.u8OSM_1stRow_DrvOOP"
+                    ],
+                    "target_value": [
+                        "3",
+                        "4"
+                    ],
+                    "rule_type": "Must (OR)"
+                },
+                {
+                    "start_time": 7.852713489250944,
+                    "end_time": 8.852713489250943,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stTopicInfo.u8Reserved2",
+                        "stOmsResult.u8OSM_2ndRow_PassSideSeatbeltStatus"
+                    ],
+                    "target_value": [
+                        "3",
+                        "3",
+                        "1"
+                    ],
+                    "rule_type": "Must (OR)"
+                }
+            ]
+        },
+        "test2 copy 11": {
+            "metadata": {
+                "vehicle": "10",
+                "sw_ver": "10",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "1",
+                "note": "1"
+            },
+            "rules": [
+                {
+                    "start_time": 1.0339713190890727,
+                    "end_time": 2.0339713190890727,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stOmsResult.u8OSM_1stRow_DrvOOP"
+                    ],
+                    "target_value": "1 | 0",
+                    "rule_type": "Must (OR)",
+                    "tolerance": 0.0
+                },
+                {
+                    "start_time": 0.0,
+                    "end_time": 30.0,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "3",
+                    "rule_type": "Must",
+                    "tolerance": 0.0
+                },
+                {
+                    "start_time": 0.0,
+                    "end_time": 1.0,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stOmsResult.u8OSM_1stRow_DrvOOP"
+                    ],
+                    "target_value": [
+                        "3",
+                        "4"
+                    ],
+                    "rule_type": "Must (OR)",
+                    "tolerance": 0.0
+                },
+                {
+                    "start_time": 7.852713489250944,
+                    "end_time": 8.852713489250943,
+                    "topic": [
+                        "stDmsResult.u8ICC_AoIStat",
+                        "stTopicInfo.u8Reserved2",
+                        "stOmsResult.u8OSM_2ndRow_PassSideSeatbeltStatus"
+                    ],
+                    "target_value": [
+                        "3",
+                        "3",
+                        "1"
+                    ],
+                    "rule_type": "Must (OR)",
+                    "tolerance": 0.0
+                }
+            ]
+        },
+        "test2 copy 12": {
+            "metadata": {
+                "vehicle": "12",
+                "sw_ver": "12",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "",
+                "note": ""
+            },
+            "rules": [
+                {
+                    "start_time": 0.0,
+                    "end_time": 30.0,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "3",
+                    "rule_type": "Must",
+                    "tolerance": 0.0
+                }
+            ]
+        },
+        "test2 copy 16": {
+            "metadata": {
+                "vehicle": "",
+                "sw_ver": "",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "",
+                "note": ""
+            },
+            "rules": [
+                {
+                    "start_time": 0.0,
+                    "end_time": 30.0,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "3",
+                    "rule_type": "Must"
+                }
+            ]
+        },
+        "test2 copy 17": {
+            "metadata": {
+                "vehicle": "",
+                "sw_ver": "",
+                "test_date": "2026-02-05",
+                "categories": [],
+                "tc_number": "",
+                "note": ""
+            },
+            "rules": [
+                {
+                    "start_time": 3.338480690657231,
+                    "end_time": 4.3384806906572315,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "1",
+                    "rule_type": "Maybe",
+                    "tolerance": 0.2
+                },
+                {
+                    "start_time": 3.416573806228161,
+                    "end_time": 4.416573806228161,
+                    "topic": "stDmsResult.u8ICC_AoIStat",
+                    "target_value": "1",
+                    "rule_type": "Maybe",
+                    "tolerance": 0.2
+                }
+            ]
+        }
     }
 }

@@ -197,6 +197,6 @@ class BatchResultDialog(QDialog):
         full_path = os.path.join(self.selected_folder, res['file'])
         if os.path.exists(full_path):
             self.parent().inspect_from_batch(full_path)
-            self.accept() # Close dialog
+            # self.accept() # Removed to keep dialog open
         else:
             QMessageBox.warning(self, "Error", f"File not found: {full_path}")
