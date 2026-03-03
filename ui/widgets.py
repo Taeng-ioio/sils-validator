@@ -370,14 +370,23 @@ class ADTFImageDisplayWidget(QWidget):
         self.frame_slider.setRange(0, max(0, self.total_frames - 1))
         self.frame_slider.setValue(self.current_index)
         self.frame_slider.valueChanged.connect(self.on_frame_slider_changed)
+        self.frame_slider.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Prevent slider from stealing arrow keys
         layout.addWidget(self.frame_slider)
         
         # Make sure the window gets focus and handles key events
         self.image_window.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.image_window.setFocus()
         
-        # Install event filter to handle key events
-        self.image_window.installEventFilter(self)
+        # Setup precise keyboard shortcuts instead of relying on eventFilters that might be swallowed
+        from PyQt6.QtGui import QShortcut, QKeySequence
+        
+        QShortcut(QKeySequence(Qt.Key.Key_Space), self.image_window).activated.connect(lambda: self.navigate_next(1))
+        
+        QShortcut(QKeySequence(Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(1))
+        QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(10))
+        
+        QShortcut(QKeySequence(Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(1))
+        QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(10))
         
         # Update the display
         self.update_image_window()
@@ -469,18 +478,7 @@ class ADTFImageDisplayWidget(QWidget):
     def get_total_frames(self):
         return self.total_frames
     
-    def eventFilter(self, obj, event):
-        """Handle events for the image window"""
-        if obj == self.image_window and event.type() == event.Type.KeyPress:
-            # Check for shift modifier
-            step = 10 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1
-            
-            if event.key() == Qt.Key.Key_Left:
-                self.navigate_previous(step)
-                return True
-            elif event.key() == Qt.Key.Key_Right:
-                self.navigate_next(step)
-                return True
+        # The eventFilter logic handling left/right keys is removed as it's superseded by QShortcut
         return super().eventFilter(obj, event)
     
     def closeEvent(self, event):
