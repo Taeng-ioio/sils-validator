@@ -308,7 +308,7 @@ class ADTFImageDisplayWidget(QWidget):
             self,
             "Select ADTF File",
             "",
-            "ADTF Files (*.dat)"
+            "DAT Files (*.dat);;All Files (*)"
         )
         
         if file_path:
