@@ -1,8 +1,10 @@
 import pyqtgraph as pg
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QSlider, QDoubleSpinBox)
+                             QSlider, QDoubleSpinBox, QPushButton, QFileDialog,
+                             QMainWindow, QScrollArea)
 from PyQt6.QtCore import pyqtSignal, Qt
-
+from PyQt6.QtGui import QImage, QPixmap
+import numpy as np
 
 class TimelineWidget(QWidget):
     time_changed = pyqtSignal(float, int) # timestamp, frame_index
@@ -51,7 +53,6 @@ class TimelineWidget(QWidget):
         self.slider_start.valueChanged.connect(self.on_slider_start_changed)
         controls_layout.addWidget(self.slider_start)
 
-    # ... (End B controls are same, skipping for brevity in replacement if unchanged, but I must replace contiguous block)
         # End (B)
         controls_layout.addWidget(QLabel("Range End (B):"))
         self.spin_end = QDoubleSpinBox()
@@ -217,15 +218,10 @@ class TimelineWidget(QWidget):
              self.updating_cursor = False
 
     def enable_range_selection(self, enabled=True):
-        # Determine visibility based on enabled
-        # But we create them in plot_topics now.
-        # Just toggle visibility of all existing regions
         for r in self.regions:
             r.setVisible(enabled)
 
     def on_region_changed(self):
-        # Legacy stub or redirect?
-        # The logic is moved to on_region_dragged
         pass
 
     def update_timeline_from_inputs(self):
@@ -266,3 +262,228 @@ class TimelineWidget(QWidget):
             
         time_val = (val / 1000.0) * max_time
         self.spin_end.setValue(time_val)
+
+
+class ADTFImageDisplayWidget(QWidget):
+    frame_changed = pyqtSignal(int, int)  # current_index, total_frames
+    
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Controls layout
+        controls_layout = QHBoxLayout()
+        
+        # Load button
+        self.load_btn = QPushButton("Load ADTF File")
+        self.load_btn.clicked.connect(self.load_adtf_file)
+        controls_layout.addWidget(self.load_btn)
+        
+        # Frame info label
+        self.frame_info_label = QLabel("Frame: 0 / 0")
+        self.frame_info_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        controls_layout.addWidget(self.frame_info_label)
+        
+        self.layout.addLayout(controls_layout)
+        
+        # ADTF loader
+        from core.data_loader import ADTFLoader
+        self.adtf_loader = ADTFLoader()
+        
+        # Current frame
+        self.current_frame = None
+        self.current_index = 0
+        self.total_frames = 0
+        
+        # Set focus policy to receive keyboard events
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        
+        # Separate image window
+        self.image_window = None
+    
+    def load_adtf_file(self):
+        """Opens file dialog to load ADTF file"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select ADTF File",
+            "",
+            "ADTF Files (*.dat)"
+        )
+        
+        if file_path:
+            try:
+                if self.adtf_loader.load_file(file_path):
+                    self.total_frames = self.adtf_loader.get_total_frames()
+                    self.current_index = 0
+                    self.current_frame = self.adtf_loader.get_frame(0)
+                    self.update_image_window()
+                    self.frame_changed.emit(0, self.total_frames)
+                    
+                    # Open separate image window
+                    self.open_image_window()
+            except Exception as e:
+                print(f"Error loading ADTF file: {e}")
+    
+    def open_image_window(self):
+        """Opens a separate window to display the image"""
+        if self.image_window is not None:
+            self.image_window.close()
+        
+        self.image_window = QMainWindow()
+        self.image_window.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1}")
+        self.image_window.resize(1280, 720)
+        
+        # Create central widget with layout
+        central_widget = QWidget()
+        self.image_window.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+        
+        # Create scroll area for image
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        layout.addWidget(self.scroll_area)
+        
+        # Create widget to hold image
+        self.image_container = QWidget()
+        self.scroll_area.setWidget(self.image_container)
+        self.image_layout = QVBoxLayout(self.image_container)
+        
+        # Create label for image display
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setStyleSheet("background-color: black;")
+        self.image_layout.addWidget(self.image_label)
+        
+        # Create label for frame info
+        self.frame_info_label_window = QLabel()
+        self.frame_info_label_window.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.frame_info_label_window.setStyleSheet("background-color: rgba(0, 0, 0, 150); color: white; font-weight: bold; padding: 5px;")
+        
+        # Add index * 0.033 calculation requirement here
+        time_s = self.current_index * 0.033
+        self.frame_info_label_window.setText(f"Index: {self.current_index} | Time: {time_s:.3f}s / {self.total_frames}")
+        self.image_layout.addWidget(self.frame_info_label_window)
+        
+        # Create slider for frame navigation
+        self.frame_slider = QSlider(Qt.Orientation.Horizontal)
+        self.frame_slider.setRange(0, max(0, self.total_frames - 1))
+        self.frame_slider.setValue(self.current_index)
+        self.frame_slider.valueChanged.connect(self.on_frame_slider_changed)
+        layout.addWidget(self.frame_slider)
+        
+        # Make sure the window gets focus and handles key events
+        self.image_window.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.image_window.setFocus()
+        
+        # Install event filter to handle key events
+        self.image_window.installEventFilter(self)
+        
+        # Update the display
+        self.update_image_window()
+        
+        # Show window
+        self.image_window.show()
+    
+    def update_image_window(self):
+        """Updates the image in the separate window"""
+        if self.current_frame is not None and self.image_window is not None:
+            # Convert numpy array to QImage
+            # ADTF image is grayscale (2D), convert to RGB (3D)
+            if len(self.current_frame.shape) == 2:
+                # Grayscale to RGB conversion
+                height, width = self.current_frame.shape
+                img_rgb = np.stack([self.current_frame] * 3, axis=2)
+            else:
+                img_rgb = self.current_frame
+            
+            height, width, channel = img_rgb.shape
+            bytes_per_line = 3 * width
+            q_img = QImage(
+                img_rgb.data,
+                width,
+                height,
+                bytes_per_line,
+                QImage.Format.Format_RGB888
+            )
+            
+            # Scale image to fit window
+            pixmap = QPixmap.fromImage(q_img)
+            scaled_pixmap = pixmap.scaled(
+                self.image_window.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            
+            self.image_label.setPixmap(scaled_pixmap)
+            
+            # Prevent window from resizing when image is updated
+            self.image_window.setFixedSize(self.image_window.size())
+            
+            # Update window title with frame index
+            self.image_window.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1} / {self.total_frames}")
+            
+            # Update frame info label in window
+            time_s = self.current_index * 0.033
+            self.frame_info_label_window.setText(f"Index: {self.current_index} | Time: {time_s:.3f}s / {self.total_frames}")
+        
+        # Update frame info in main widget
+        self.frame_info_label.setText(f"Frame: {self.current_index + 1} / {self.total_frames}")
+    
+    def navigate_next(self, step=1):
+        """Navigate to next frame"""
+        if self.current_index < self.total_frames - 1:
+            self.current_index = min(self.total_frames - 1, self.current_index + step)
+            self.current_frame = self.adtf_loader.get_frame(self.current_index)
+            self.update_image_window()
+            # update slider without triggering double events
+            if self.image_window:
+                self.frame_slider.blockSignals(True)
+                self.frame_slider.setValue(self.current_index)
+                self.frame_slider.blockSignals(False)
+            self.frame_changed.emit(self.current_index, self.total_frames)
+    
+    def on_frame_slider_changed(self, value):
+        """Handle frame slider change"""
+        if value != self.current_index:
+            self.current_index = value
+            self.current_frame = self.adtf_loader.get_frame(self.current_index)
+            self.update_image_window()
+            self.frame_changed.emit(self.current_index, self.total_frames)
+    
+    def navigate_previous(self, step=1):
+        """Navigate to previous frame"""
+        if self.current_index > 0:
+            self.current_index = max(0, self.current_index - step)
+            self.current_frame = self.adtf_loader.get_frame(self.current_index)
+            self.update_image_window()
+            if self.image_window:
+                self.frame_slider.blockSignals(True)
+                self.frame_slider.setValue(self.current_index)
+                self.frame_slider.blockSignals(False)
+            self.frame_changed.emit(self.current_index, self.total_frames)
+    
+    def get_current_frame_index(self):
+        return self.current_index
+    
+    def get_total_frames(self):
+        return self.total_frames
+    
+    def eventFilter(self, obj, event):
+        """Handle events for the image window"""
+        if obj == self.image_window and event.type() == event.Type.KeyPress:
+            # Check for shift modifier
+            step = 10 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1
+            
+            if event.key() == Qt.Key.Key_Left:
+                self.navigate_previous(step)
+                return True
+            elif event.key() == Qt.Key.Key_Right:
+                self.navigate_next(step)
+                return True
+        return super().eventFilter(obj, event)
+    
+    def closeEvent(self, event):
+        """Clean up when widget is closed"""
+        self.adtf_loader.close()
+        event.accept()

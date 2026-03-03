@@ -1,4 +1,7 @@
 import pandas as pd
+import adtf_file
+import numpy as np
+from pathlib import Path
 
 class ExcelLoader:
     def __init__(self):
@@ -53,3 +56,110 @@ class ExcelLoader:
             if 0 <= index < len(self.df):
                 return self.df.iloc[index][topic]
         return None
+
+class ADTFLoader:
+    def __init__(self):
+        self.reader = None
+        self.image_stream_id = None
+        self.current_frame_index = 0
+        self.image_shape = (1985, 2560)
+        
+    def load_file(self, file_path):
+        """
+        Loads the ADTF .dat file and finds the image stream.
+        """
+        try:
+            dat_name = str(Path(file_path))
+            self.reader = adtf_file.create_seekablereader(dat_name)
+            
+            # Find image stream ID
+            self.image_stream_id = None
+            for stream in self.reader.streams:
+                if stream.name in ['Image0', 'DTSImage0']:
+                    self.image_stream_id = stream.stream_id
+                    break
+            
+            if self.image_stream_id is None:
+                raise ValueError("이미지 스트림을 찾을 수 없습니다. (Image0 또는 DTSImage0)")
+            
+            self.current_frame_index = 0
+            
+            return True
+        except Exception as e:
+            raise e
+    
+    def get_frame(self, frame_index):
+        """
+        Gets the image at the specified frame index.
+        Returns: numpy array of the image
+        """
+        if self.reader is None or self.image_stream_id is None:
+            return None
+        
+        try:
+            # Get item index for the frame
+            item_idx = self.reader.get_item_index_for_stream_item_index(
+                self.image_stream_id, frame_index
+            )
+            
+            # Seek to the item
+            self.reader.seek_to(item_idx)
+            item = self.reader.get_next_item()
+            
+            if not item or item.stream_id != self.image_stream_id:
+                return None
+            
+            # Convert buffer to numpy array
+            img = np.frombuffer(item.sample.buffer, dtype=np.uint8)
+            img = np.reshape(img, self.image_shape)
+            
+            return img
+        except Exception as e:
+            return None
+    
+    def get_next_frame(self):
+        """
+        Gets the next frame and increments the index.
+        Returns: numpy array of the image, or None if at the end
+        """
+        if self.current_frame_index < 10000:  # Safety limit
+            self.current_frame_index += 1
+            return self.get_frame(self.current_frame_index)
+        return None
+    
+    def get_previous_frame(self):
+        """
+        Gets the previous frame and decrements the index.
+        Returns: numpy array of the image, or None if at the beginning
+        """
+        if self.current_frame_index > 0:
+            self.current_frame_index -= 1
+            return self.get_frame(self.current_frame_index)
+        return None
+    
+    def get_current_frame_index(self):
+        return self.current_frame_index
+    
+    def get_total_frames(self):
+        """Get total number of frames by counting stream items"""
+        if self.reader is None or self.image_stream_id is None:
+            return 0
+        
+        try:
+            # Count items by iterating through the stream
+            count = 0
+            for stream in self.reader.streams:
+                if stream.stream_id == self.image_stream_id:
+                    # Get item count for this stream
+                    count = stream.item_count
+                    break
+            return count
+        except Exception as e:
+            print(f"Error getting total frames: {e}")
+            return 0
+    
+    def close(self):
+        """Closes the ADTF reader"""
+        if self.reader:
+            self.reader.close()
+            self.reader = None

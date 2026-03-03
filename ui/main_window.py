@@ -1,20 +1,19 @@
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QPushButton, QLabel, QFileDialog, QComboBox, QListWidget, 
-                             QMessageBox, QFrame, QSplitter, QLineEdit, QRadioButton, 
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+                             QPushButton, QLabel, QFileDialog, QComboBox, QListWidget,
+                             QMessageBox, QFrame, QSplitter, QLineEdit, QRadioButton,
                              QButtonGroup, QTableWidget, QTableWidgetItem, QHeaderView,
                              QCompleter, QSlider, QDoubleSpinBox, QGroupBox, QDateEdit,
                              QPlainTextEdit, QSpinBox, QScrollArea)
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QDate
-from core.data_loader import ExcelLoader
+from core.data_loader import ExcelLoader, ADTFLoader
 from core.logic import InspectorLogic, Rule, RuleType
 import os
 
-from ui.widgets import TimelineWidget
+from ui.widgets import TimelineWidget, ADTFImageDisplayWidget
 from ui.batch_dialog import BatchResultDialog
 from ui.macro_dialog import MacroDialog
 from ui.or_rule_dialog import ORRuleDialog
-from ui.dat_viewer import DatViewerWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -65,11 +64,6 @@ class MainWindow(QMainWindow):
         load_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         load_folder_btn.clicked.connect(self.load_folder_dialog)
         
-        # Load DAT Button
-        load_dat_btn = QPushButton("Load DAT")
-        load_dat_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        load_dat_btn.clicked.connect(self.load_dat_file)
-        
         # Navigation Controls
         self.prev_btn = QPushButton("◀")
         self.prev_btn.setFixedSize(30, 30)
@@ -101,7 +95,6 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(master_btn)
         top_bar.addWidget(load_btn)
         top_bar.addWidget(load_folder_btn)
-        top_bar.addWidget(load_dat_btn)
         top_bar.addWidget(self.prev_btn)
         top_bar.addWidget(self.file_dropdown)
         top_bar.addWidget(self.next_btn)
@@ -262,10 +255,15 @@ class MainWindow(QMainWindow):
         self.data_display_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         viz_layout.addWidget(self.data_display_label)
 
+        # ADTF Image Display Widget
+        self.adtf_display = ADTFImageDisplayWidget()
+        self.adtf_display.frame_changed.connect(self.on_adtf_frame_changed)
+        viz_layout.addWidget(self.adtf_display)
+
         # Visualization Widget
         self.timeline = TimelineWidget()
         self.timeline.time_changed.connect(self.on_time_changed)
-        viz_layout.addWidget(self.timeline) 
+        viz_layout.addWidget(self.timeline)
         
         right_splitter.addWidget(viz_container)
         
@@ -738,12 +736,6 @@ class MainWindow(QMainWindow):
             self._update_file_dropdown_ui()
             self._load_file_from_path(file_name)
 
-    def load_dat_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open DAT File", "", "ADTF DAT Files (*.dat)")
-        if file_name:
-            self.dat_viewer = DatViewerWindow(file_name, self)
-            self.dat_viewer.show()
-
     def load_folder_dialog(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
         if folder_path:
@@ -804,6 +796,16 @@ class MainWindow(QMainWindow):
             self.file_dropdown.setCurrentIndex(new_index)
         else:
              QMessageBox.information(self, "Info", "This is the first file.")
+    
+    def navigate_adtf_next(self):
+        """Navigate to next frame in ADTF image display"""
+        if hasattr(self, 'adtf_display'):
+            self.adtf_display.navigate_next()
+    
+    def navigate_adtf_previous(self):
+        """Navigate to previous frame in ADTF image display"""
+        if hasattr(self, 'adtf_display'):
+            self.adtf_display.navigate_previous()
 
     def setup_shortcuts(self):
         # QShortcut(QKeySequence("Ctrl+Q"), self, activated=self.load_prev_file)
@@ -817,6 +819,13 @@ class MainWindow(QMainWindow):
 
         self.shortcut_recent = QShortcut(QKeySequence("Ctrl+R"), self)
         self.shortcut_recent.activated.connect(self.load_recent_config)
+        
+        self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.shortcut_save.activated.connect(self.save_config)
+        
+        # Spacebar shortcut for ADTF image navigation
+        self.shortcut_space = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
+        self.shortcut_space.activated.connect(self.navigate_adtf_next)
 
     def add_topic(self):
         topic = self.topic_combo.currentText()
@@ -910,7 +919,11 @@ class MainWindow(QMainWindow):
         if values:
             info_text += " | ".join(values)
             
-        self.data_display_label.setText(info_text)
+    
+    def on_adtf_frame_changed(self, current_index, total_frames):
+        """Handle ADTF frame change events"""
+        self.data_display_label.setText(f"ADTF Frame: {current_index + 1} / {total_frames}")
+        # self.data_display_label.setText(info_text)
 
     def open_batch_dialog(self):
         if self.batch_dialog is None:
@@ -1129,4 +1142,3 @@ class MainWindow(QMainWindow):
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load recent config: {e}")
-
