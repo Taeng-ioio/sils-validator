@@ -14,6 +14,7 @@ from ui.widgets import TimelineWidget
 from ui.batch_dialog import BatchResultDialog
 from ui.macro_dialog import MacroDialog
 from ui.or_rule_dialog import ORRuleDialog
+from ui.dat_viewer import DatViewerWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -64,6 +65,11 @@ class MainWindow(QMainWindow):
         load_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         load_folder_btn.clicked.connect(self.load_folder_dialog)
         
+        # Load DAT Button
+        load_dat_btn = QPushButton("Load DAT")
+        load_dat_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        load_dat_btn.clicked.connect(self.load_dat_file)
+        
         # Navigation Controls
         self.prev_btn = QPushButton("◀")
         self.prev_btn.setFixedSize(30, 30)
@@ -95,6 +101,7 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(master_btn)
         top_bar.addWidget(load_btn)
         top_bar.addWidget(load_folder_btn)
+        top_bar.addWidget(load_dat_btn)
         top_bar.addWidget(self.prev_btn)
         top_bar.addWidget(self.file_dropdown)
         top_bar.addWidget(self.next_btn)
@@ -730,6 +737,12 @@ class MainWindow(QMainWindow):
             self.current_file_index = 0
             self._update_file_dropdown_ui()
             self._load_file_from_path(file_name)
+
+    def load_dat_file(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open DAT File", "", "ADTF DAT Files (*.dat)")
+        if file_name:
+            self.dat_viewer = DatViewerWindow(file_name, self)
+            self.dat_viewer.show()
 
     def load_folder_dialog(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
