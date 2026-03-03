@@ -29,6 +29,9 @@ class MainWindow(QMainWindow):
         self.current_file_index = -1
         self.recent_config = None
         self.batch_dialog = None
+        
+        self.dat_folder_path = None
+        self.dat_file_map = {} # Maps base name (e.g., 'AAAA') to absolute path
 
         self.init_ui()
         self.setup_shortcuts()
@@ -64,6 +67,11 @@ class MainWindow(QMainWindow):
         load_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         load_folder_btn.clicked.connect(self.load_folder_dialog)
         
+        # Load DAT Folder Button
+        load_dat_folder_btn = QPushButton("Select DAT Folder")
+        load_dat_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        load_dat_folder_btn.clicked.connect(self.load_dat_folder_dialog)
+        
         # Navigation Controls
         self.prev_btn = QPushButton("◀")
         self.prev_btn.setFixedSize(30, 30)
@@ -95,6 +103,7 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(master_btn)
         top_bar.addWidget(load_btn)
         top_bar.addWidget(load_folder_btn)
+        top_bar.addWidget(load_dat_folder_btn)
         top_bar.addWidget(self.prev_btn)
         top_bar.addWidget(self.file_dropdown)
         top_bar.addWidget(self.next_btn)
@@ -767,6 +776,31 @@ class MainWindow(QMainWindow):
             # Force load because if index was already 0 (default), setCurrentIndex(0) won't trigger signal
             self._load_file_from_path(self.file_list[0])
 
+    def load_dat_folder_dialog(self):
+        folder_path = QFileDialog.getExistingDirectory(self, "Select DAT Folder")
+        if folder_path:
+            self.scan_folder_for_dat(folder_path)
+
+    def scan_folder_for_dat(self, folder_path):
+        self.dat_folder_path = folder_path
+        self.dat_file_map.clear()
+        count = 0
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if file.lower().endswith('.dat'):
+                    base_name = os.path.splitext(file)[0]
+                    self.dat_file_map[base_name] = os.path.join(root, file)
+                    count += 1
+        
+        if count == 0:
+            QMessageBox.warning(self, "No Files", "No .dat files found in selected folder.")
+        else:
+            QMessageBox.information(self, "DAT Folder Loaded", f"Found {count} .dat files.\nThey will load automatically when matching Excel files are selected.")
+            
+            # If an excel file is already open, try to match it inside the newly selected DAT folder
+            if self.current_excel_path:
+                self._match_and_load_dat()
+
     def _update_file_dropdown_ui(self):
         self.file_dropdown.blockSignals(True)
         self.file_dropdown.clear()
@@ -976,9 +1010,35 @@ class MainWindow(QMainWindow):
             
             # Force update plot (will clear if no topics selected)
             self.update_plot()
+            
+            # Attempt to find and auto-load matching DAT file
+            self._match_and_load_dat()
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
+
+    def _match_and_load_dat(self):
+        """Attempts to match current excel file with a DAT file and load it."""
+        if not self.current_excel_path or not self.dat_file_map:
+            return
+            
+        # Example logic: AAAA_lgresult.csv -> AAAA
+        base_filename = os.path.basename(self.current_excel_path)
+        name_without_ext = os.path.splitext(base_filename)[0]
+        
+        # Common suffix removal, adjust as needed depending on naming conventions
+        if name_without_ext.endswith("_lgresult"):
+            target_dat_name = name_without_ext[:-9]  # Remove '_lgresult' (9 chars)
+        else:
+            target_dat_name = name_without_ext
+            
+        if target_dat_name in self.dat_file_map:
+            matched_path = self.dat_file_map[target_dat_name]
+            if hasattr(self, 'adtf_display'):
+                # The image logic is handled directly in load_adtf_file_from_path
+                self.adtf_display.load_adtf_file_from_path(matched_path)
+        else:
+            print(f"No matching .dat file found for '{target_dat_name}' in the loaded DAT folder.")
 
     def _load_config_for_current_excel(self):
         if not self.current_excel_path:

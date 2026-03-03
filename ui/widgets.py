@@ -312,18 +312,22 @@ class ADTFImageDisplayWidget(QWidget):
         )
         
         if file_path:
-            try:
-                if self.adtf_loader.load_file(file_path):
-                    self.total_frames = self.adtf_loader.get_total_frames()
-                    self.current_index = 0
-                    self.current_frame = self.adtf_loader.get_frame(0)
-                    self.update_image_window()
-                    self.frame_changed.emit(0, self.total_frames)
-                    
-                    # Open separate image window
-                    self.open_image_window()
-            except Exception as e:
-                print(f"Error loading ADTF file: {e}")
+            self.load_adtf_file_from_path(file_path)
+
+    def load_adtf_file_from_path(self, file_path):
+        """Loads ADTF file directly from a given absolute path."""
+        try:
+            if self.adtf_loader.load_file(file_path):
+                self.total_frames = self.adtf_loader.get_total_frames()
+                self.current_index = 0
+                self.current_frame = self.adtf_loader.get_frame(0)
+                self.update_image_window()
+                self.frame_changed.emit(0, self.total_frames)
+                
+                # Open separate image window
+                self.open_image_window()
+        except Exception as e:
+            print(f"Error loading ADTF file: {e}")
     
     def open_image_window(self):
         """Opens a separate window to display the image"""
