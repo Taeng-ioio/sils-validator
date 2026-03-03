@@ -785,11 +785,37 @@ class MainWindow(QMainWindow):
         self.dat_folder_path = folder_path
         self.dat_file_map.clear()
         count = 0
+        
+        def resolve_lnk(lnk_path):
+            try:
+                import win32com.client
+                shell = win32com.client.Dispatch("WScript.Shell")
+                shortcut = shell.CreateShortcut(lnk_path)
+                return shortcut.Targetpath
+            except Exception as e:
+                print(f"Warning: Could not resolve shortcut {lnk_path} ({e})")
+                return None
+
         for root, dirs, files in os.walk(folder_path):
             for file in files:
-                if file.lower().endswith('.dat'):
+                full_path = os.path.join(root, file)
+                if file.lower().endswith('.lnk'):
+                    target_path = resolve_lnk(full_path)
+                    if target_path and os.path.exists(target_path):
+                        if os.path.isdir(target_path):
+                            for sub_root, _, sub_files in os.walk(target_path):
+                                for sub_file in sub_files:
+                                    if sub_file.lower().endswith('.dat'):
+                                        base_name = os.path.splitext(sub_file)[0]
+                                        self.dat_file_map[base_name] = os.path.realpath(os.path.join(sub_root, sub_file))
+                                        count += 1
+                        elif target_path.lower().endswith('.dat'):
+                            base_name = os.path.splitext(os.path.basename(target_path))[0]
+                            self.dat_file_map[base_name] = os.path.realpath(target_path)
+                            count += 1
+                elif file.lower().endswith('.dat'):
                     base_name = os.path.splitext(file)[0]
-                    self.dat_file_map[base_name] = os.path.join(root, file)
+                    self.dat_file_map[base_name] = full_path
                     count += 1
         
         if count == 0:
