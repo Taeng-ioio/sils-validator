@@ -81,25 +81,25 @@ class DatViewerWindow(QMainWindow):
         import struct
         
         try:
-            # First, let's try to introspect the adtf module to see what classes it actually has available
-            available_attrs = dir(adtf)
+            # We found out that adtf_file.Reader exists, but has no direct constructor.
+            # Usually, C++ bound classes with "No constructor defined!" use a factory method
+            # or a standalone open function. We will gather the available methods to find it.
+            import adtf_file
             
-            # Since we got an AttributeError for adtf.File, let's look for common alternative names
-            # like 'adtf_file', 'Reader', 'FileReader', etc. or just print everything if we don't know it.
-            if hasattr(adtf, 'File'):
-                 reader = adtf.File(self.dat_file_path)
+            # Let's check for common factory functions in the module level
+            if hasattr(adtf_file, 'open'):
+                reader = adtf_file.open(self.dat_file_path)
+            elif hasattr(adtf_file.Reader, 'open'):
+                reader = adtf_file.Reader.open(self.dat_file_path)
+            elif hasattr(adtf_file.Reader, 'create'):
+                reader = adtf_file.Reader.create(self.dat_file_path)
+            elif hasattr(adtf_file, 'make_reader'):
+                reader = adtf_file.make_reader(self.dat_file_path)
             else:
-                 # Check if adtf_file is a separate installed module
-                 try:
-                     import adtf_file
-                     # If adtf_file exists, try to guess its reader object
-                     reader_class = getattr(adtf_file, 'File', getattr(adtf_file, 'Reader', getattr(adtf_file, 'FileReader', None)))
-                     if reader_class:
-                         reader = reader_class(self.dat_file_path)
-                     else:
-                         raise AttributeError(f"Could not find Reader class. adtf_file has: {dir(adtf_file)}")
-                 except ImportError:
-                     raise AttributeError(f"Cannot find 'File' in adtf. Available ADTF attributes are: {available_attrs}")
+                # If we still can't guess, let's output the module and Reader attributes for the user.
+                adtf_file_attrs = [a for a in dir(adtf_file) if not a.startswith('__')]
+                reader_attrs = [a for a in dir(adtf_file.Reader) if not a.startswith('__')]
+                raise RuntimeError(f"Cannot initialize Reader.\nadtf_file methods: {adtf_file_attrs}\nReader methods: {reader_attrs}")
             
             # Extract basic information about streams
             stream_info_list = reader.get_streams()
