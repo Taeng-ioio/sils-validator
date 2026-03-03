@@ -81,8 +81,25 @@ class DatViewerWindow(QMainWindow):
         import struct
         
         try:
-            # Initialize ADTF File reader
-            reader = adtf.File(self.dat_file_path)
+            # First, let's try to introspect the adtf module to see what classes it actually has available
+            available_attrs = dir(adtf)
+            
+            # Since we got an AttributeError for adtf.File, let's look for common alternative names
+            # like 'adtf_file', 'Reader', 'FileReader', etc. or just print everything if we don't know it.
+            if hasattr(adtf, 'File'):
+                 reader = adtf.File(self.dat_file_path)
+            else:
+                 # Check if adtf_file is a separate installed module
+                 try:
+                     import adtf_file
+                     # If adtf_file exists, try to guess its reader object
+                     reader_class = getattr(adtf_file, 'File', getattr(adtf_file, 'Reader', getattr(adtf_file, 'FileReader', None)))
+                     if reader_class:
+                         reader = reader_class(self.dat_file_path)
+                     else:
+                         raise AttributeError(f"Could not find Reader class. adtf_file has: {dir(adtf_file)}")
+                 except ImportError:
+                     raise AttributeError(f"Cannot find 'File' in adtf. Available ADTF attributes are: {available_attrs}")
             
             # Extract basic information about streams
             stream_info_list = reader.get_streams()
