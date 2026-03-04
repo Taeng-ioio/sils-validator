@@ -124,11 +124,13 @@ class ADTFLoader:
             # This handles the specific DAT file the user is currently struggling with
             if buffer_len == 10158080:
                 import cv2
-                # Treat as YUYV format (2 bytes per pixel)
-                img_yuv = np.frombuffer(buffer, dtype=np.uint8).reshape((1984, 2560, 2))
+                # Treat as UYVY format (2 bytes per pixel)
+                # UYVY swap fixes the neon green/purple chroma artifact seen in standard YUYV
+                # The camera is actually Portrait Mode (2560 Height, 1984 Width), not Landscape
+                img_yuv = np.frombuffer(buffer, dtype=np.uint8).reshape((2560, 1984, 2))
                 
-                # Convert YUYV 4:2:2 to standard RGB (3 bytes per pixel)
-                img_rgb = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2RGB_YUYV)
+                # Convert UYVY 4:2:2 to standard RGB (3 bytes per pixel)
+                img_rgb = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2RGB_UYVY)
                 
                 return img_rgb
             
