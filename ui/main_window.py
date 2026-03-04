@@ -1062,14 +1062,14 @@ class MainWindow(QMainWindow):
         if target_dat_name in self.dat_file_map:
             matched_path = self.dat_file_map[target_dat_name]
             
-            # Close existing viewer if open to avoid spawning multiple windows
-            if hasattr(self, 'dat_viewer_window') and self.dat_viewer_window is not None:
-                self.dat_viewer_window.close()
-                self.dat_viewer_window = None
-                
-            # Open using the standalone Dat Image Viewer window
-            self.dat_viewer_window = DatViewerWindow(matched_path, self)
-            self.dat_viewer_window.show()
+            # Reuse existing viewer if it is already open to prevent flickering
+            if hasattr(self, 'dat_viewer_window') and self.dat_viewer_window is not None and self.dat_viewer_window.isVisible():
+                self.dat_viewer_window.dat_file_path = matched_path
+                self.dat_viewer_window.setWindowTitle(f"DAT Viewer - {os.path.basename(matched_path)}")
+                self.dat_viewer_window.load_dat_file()
+            else:
+                self.dat_viewer_window = DatViewerWindow(matched_path, self)
+                self.dat_viewer_window.show()
         else:
             print(f"No matching .dat file found for '{target_dat_name}' in the loaded DAT folder.")
 
