@@ -445,7 +445,9 @@ class ADTFImageDisplayWidget(QWidget):
             self.frame_info_label.setText(f"Frame: {self.current_index + 1} / {self.total_frames}")
         except Exception as e:
             import traceback
-            with open("/Volumes/T7/Project/LGE/sils-validator/ui_error.txt", "w") as f:
+            import os
+            error_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ui_error.txt')
+            with open(error_file, "w") as f:
                 f.write(traceback.format_exc())
             print(f"CRITICAL UI ERROR: {e}")
     

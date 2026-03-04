@@ -133,7 +133,9 @@ class ADTFLoader:
                 return img8
             else:
                 # Log unexpected buffer sizes to diagnose the black screen
-                with open("/Volumes/T7/Project/LGE/sils-validator/ui_error.txt", "a") as f:
+                import os
+                error_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ui_error.txt')
+                with open(error_file, "a") as f:
                     f.write(f"WARNING: Unexpected buffer_len: {buffer_len}. Expected 10158080 or {target_size_8bit}.\n")
             
             # 3. Fallback: try raw reshape with user's original logic as a last resort
@@ -143,7 +145,9 @@ class ADTFLoader:
             
         except Exception as e:
             import traceback
-            with open("/Volumes/T7/Project/LGE/sils-validator/ui_error.txt", "a") as f:
+            import os
+            error_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ui_error.txt')
+            with open(error_file, "a") as f:
                 f.write(f"ERROR in get_frame: {e}\n{traceback.format_exc()}\n")
             return None
     
