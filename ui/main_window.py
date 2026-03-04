@@ -35,7 +35,10 @@ class MainWindow(QMainWindow):
 
         self.init_ui()
         self.setup_shortcuts()
-        self.auto_load_master_config()
+        
+        # Schedule auto-load to run after the main window is shown and event loop starts
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(100, self.auto_load_master_config)
 
     def auto_load_master_config(self):
         import os
