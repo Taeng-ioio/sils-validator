@@ -808,15 +808,15 @@ class MainWindow(QMainWindow):
                                 for sub_file in sub_files:
                                     if sub_file.lower().endswith('.dat'):
                                         base_name = os.path.splitext(sub_file)[0]
-                                        self.dat_file_map[base_name] = os.path.realpath(os.path.join(sub_root, sub_file))
+                                        self.dat_file_map[base_name.lower()] = os.path.realpath(os.path.join(sub_root, sub_file))
                                         count += 1
                         elif target_path.lower().endswith('.dat'):
                             base_name = os.path.splitext(os.path.basename(target_path))[0]
-                            self.dat_file_map[base_name] = os.path.realpath(target_path)
+                            self.dat_file_map[base_name.lower()] = os.path.realpath(target_path)
                             count += 1
                 elif file.lower().endswith('.dat'):
                     base_name = os.path.splitext(file)[0]
-                    self.dat_file_map[base_name] = full_path
+                    self.dat_file_map[base_name.lower()] = full_path
                     count += 1
         
         if count == 0:
@@ -1054,13 +1054,18 @@ class MainWindow(QMainWindow):
         name_without_ext = os.path.splitext(base_filename)[0]
         
         # Common suffix removal, adjust as needed depending on naming conventions
-        if name_without_ext.endswith("_lgresult"):
-            target_dat_name = name_without_ext[:-9]  # Remove '_lgresult' (9 chars)
+        name_lower = name_without_ext.lower()
+        if name_lower.endswith("_lgeresult"):
+            target_dat_name = name_without_ext[:-10]  # Remove '_lgeresult' (10 chars)
+        elif name_lower.endswith("_lgresult"):
+            target_dat_name = name_without_ext[:-9]   # Fallback for old name
         else:
             target_dat_name = name_without_ext
             
-        if target_dat_name in self.dat_file_map:
-            matched_path = self.dat_file_map[target_dat_name]
+        target_lookup = target_dat_name.lower()
+            
+        if target_lookup in self.dat_file_map:
+            matched_path = self.dat_file_map[target_lookup]
             
             # Reuse existing viewer if it is already open to prevent flickering
             if hasattr(self, 'dat_viewer_window') and self.dat_viewer_window is not None and self.dat_viewer_window.isVisible():
