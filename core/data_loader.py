@@ -110,11 +110,31 @@ class ADTFLoader:
                 return None
             
             # Convert buffer to numpy array
-            img = np.frombuffer(item.sample.buffer, dtype=np.uint8)
-            img = np.reshape(img, self.image_shape)
+            img_buffer = np.frombuffer(item.sample.buffer, dtype=np.uint8)
             
-            return img
+            expected_size = self.image_shape[0] * self.image_shape[1]
+            if len(img_buffer) == expected_size:
+                # Raw grayscale
+                img = np.reshape(img_buffer, self.image_shape)
+                return img
+            elif len(img_buffer) == expected_size * 3:
+                # Raw RGB
+                img = np.reshape(img_buffer, (self.image_shape[0], self.image_shape[1], 3))
+                return img
+            else:
+                # Attempt to decode as generic encoded image (JPEG, PNG, etc)
+                import cv2
+                decoded = cv2.imdecode(img_buffer, cv2.IMREAD_UNCHANGED)
+                if decoded is not None:
+                    if len(decoded.shape) == 3 and decoded.shape[2] == 3:
+                        # cv2 loads as BGR, convert to RGB for QImage pipeline
+                        decoded = cv2.cvtColor(decoded, cv2.COLOR_BGR2RGB)
+                    return decoded
+                else:
+                    return None
+                    
         except Exception as e:
+            print(f"Exception in get_frame({frame_index}): {e}")
             return None
     
     def get_next_frame(self):
