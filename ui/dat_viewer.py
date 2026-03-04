@@ -44,6 +44,7 @@ class DatViewerWindow(QMainWindow):
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setStyleSheet("background-color: black;")
+        self.image_label.setMinimumSize(640, 480) # Prevent total collapse on empty frames
         self.image_layout.addWidget(self.image_label)
         
         # Create label for frame info
@@ -73,9 +74,12 @@ class DatViewerWindow(QMainWindow):
                 self.update_image_window()
             else:
                 self.image_label.setText("Failed to load generic ADTF file.")
+                # Enforce minimum size for the black screen layout
+                self.image_label.setMinimumSize(640, 480)
         except Exception as e:
             QMessageBox.critical(self, "Error Loading DAT", f"Failed to load DAT file:\n{str(e)}")
-            self.image_label.setText(f"Error loading file: {e}")
+            # Enforce minimum size for the black screen layout
+            self.image_label.setMinimumSize(640, 480)
             
     def update_image_window(self):
         if self.current_frame is not None:
@@ -114,7 +118,8 @@ class DatViewerWindow(QMainWindow):
             self.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1} / {self.total_frames}")
             self.frame_info_label_window.setText(f"Frame: {self.current_index + 1} / {self.total_frames}")
         else:
-            self.image_label.setText("Error decoding frame (Loader returned None or Exception)")
+            self.image_label.clear()
+            self.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1} (Empty)")
             
     def navigate_next(self):
         if self.current_index < self.total_frames - 1:

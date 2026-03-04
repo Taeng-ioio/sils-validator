@@ -1,0 +1,213 @@
+commit 3433ccf40a80b8dba5acde98b7bc8edb0ca3235e
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 15:37:50 2026 +0900
+
+    dat folder
+--
+diff --git a/core/data_loader.py b/core/data_loader.py
+index ca3c5d6..53b00e3 100644
+--- a/core/data_loader.py
+--
+diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
+index 9475757..ccef1ee 100644
+--- a/ui/dat_viewer.py
+--
+commit e2b9cbcb3209be78ce0d11078a90b1cd7551aed4
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 15:29:45 2026 +0900
+
+    dat folder
+--
+diff --git a/core/data_loader.py b/core/data_loader.py
+index fd17faa..ca3c5d6 100644
+--- a/core/data_loader.py
+--
+commit a64fbaadac76f4c6b1f7e4258a3dcae52dba8697
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 11:29:32 2026 +0900
+
+    dat folder
+--
+diff --git a/core/data_loader.py b/core/data_loader.py
+index 7730992..fd17faa 100644
+--- a/core/data_loader.py
+--
+diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
+index dd6d87f..9475757 100644
+--- a/ui/dat_viewer.py
+--
+commit 64873c4423b83b31599f98279f95d061250deabf
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 11:25:22 2026 +0900
+
+    dat folder
+--
+diff --git a/core/data_loader.py b/core/data_loader.py
+index 53b00e3..7730992 100644
+--- a/core/data_loader.py
+--
+diff --git a/old_dat.txt b/old_dat.txt
+new file mode 100644
+index 0000000..679f4a9
+--
++Date:   Wed Mar 4 11:17:40 2026 +0900
++
++    dat folder
+--
++diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
++index 2981f3c..dd6d87f 100644
++--- a/ui/dat_viewer.py
+--
++Date:   Wed Mar 4 00:16:43 2026 +0900
++
++    Add ADTF introspection debug logic
+--
++diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
++index b14a10f..2981f3c 100644
++--- a/ui/dat_viewer.py
+--
++Date:   Wed Mar 4 00:12:56 2026 +0900
++
++    adtf test 1
+--
++diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
++index 1538a50..b14a10f 100644
++--- a/ui/dat_viewer.py
+--
++Date:   Wed Mar 4 00:04:16 2026 +0900
++
++    adtf mac test
+--
++diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
++new file mode 100644
++index 0000000..1538a50
+--
+diff --git a/test_adtf.py b/test_adtf.py
+new file mode 100644
+index 0000000..1bd9e67
+--
+commit 6fe70c67bf2dfa90a8f1459f22eac3c31c41ffea
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 11:17:40 2026 +0900
+
+    dat folder
+--
+diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
+index 2981f3c..dd6d87f 100644
+--- a/ui/dat_viewer.py
+--
+commit ac13d6d15ce6b897b0cdb92a432036f488194bd4
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 11:10:31 2026 +0900
+
+    dat folder
+--
+diff --git a/ui/main_window.py b/ui/main_window.py
+index 7b1d7c4..2658d4a 100644
+--- a/ui/main_window.py
+--
+commit 4ca44d99c19de89c4715cd217107863d8826fe1c
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 10:56:02 2026 +0900
+
+    dat folder
+--
+diff --git a/ui/main_window.py b/ui/main_window.py
+index 8e4abd7..7b1d7c4 100644
+--- a/ui/main_window.py
+--
+commit a4ca4ec0822008621db5aca6a6e0ffcd97024d52
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 01:41:08 2026 +0900
+
+    dat folder
+--
+diff --git a/ui/main_window.py b/ui/main_window.py
+index 9d358dd..8e4abd7 100644
+--- a/ui/main_window.py
+--
+commit c8f50d4a6487940068a0dcc0dba28e00b1b5fb90
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 01:27:20 2026 +0900
+
+    dat folder
+--
+diff --git a/test_script.py b/test_script.py
+new file mode 100644
+index 0000000..9642d89
+--
+diff --git a/ui/main_window.py b/ui/main_window.py
+index a134a7e..9d358dd 100644
+--- a/ui/main_window.py
+--
+commit 953ae5be791152b7b8837a908719b4c4c00f2ea8
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 01:04:44 2026 +0900
+
+    Implement DAT folder auto-matching
+--
+diff --git a/ui/main_window.py b/ui/main_window.py
+index 19d6601..a134a7e 100644
+--- a/ui/main_window.py
+--
+diff --git a/ui/widgets.py b/ui/widgets.py
+index 486dd52..3bc60c4 100644
+--- a/ui/widgets.py
+--
+commit 41ca4362b2a703faa5d6c76630b852f4bf4a222a
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 00:53:56 2026 +0900
+
+    Fix keyboard shortcuts by using QShortcut instead of eventFilter
+--
+diff --git a/ui/widgets.py b/ui/widgets.py
+index 0136574..486dd52 100644
+--- a/ui/widgets.py
+--
+commit e23befaa3b91d2880ba726aca5001c4540898de4
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 00:50:13 2026 +0900
+
+    Fix DAT file filter in QFileDialog
+--
+diff --git a/ui/widgets.py b/ui/widgets.py
+index 9d11b39..0136574 100644
+--- a/ui/widgets.py
+--
+commit 7e22865776a13069ebed9c9d26b62fd97180555e
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 00:27:06 2026 +0900
+
+    Integrate user ADTF loader and widget code
+--
+diff --git a/core/data_loader.py b/core/data_loader.py
+index a2e4a3d..53b00e3 100644
+--- a/core/data_loader.py
+--
+diff --git a/ui/main_window.py b/ui/main_window.py
+index ce1bd9b..19d6601 100644
+--- a/ui/main_window.py
+--
+diff --git a/ui/widgets.py b/ui/widgets.py
+index 5333ad5..9d11b39 100644
+--- a/ui/widgets.py
+--
+commit 8cacca06ad65b53355c2c985a27da85b9a78c5e3
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 00:16:43 2026 +0900
+
+    Add ADTF introspection debug logic
+--
+diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
+index b14a10f..2981f3c 100644
+--- a/ui/dat_viewer.py
+--
+commit 524510865c18308e0eec2d5a87204135a64c3bd4
+Author: AuziiTaeng <auziitaeng.app.develop@gmail.com>
+Date:   Wed Mar 4 00:12:56 2026 +0900
+
+    adtf test 1
+--
+diff --git a/ui/dat_viewer.py b/ui/dat_viewer.py
+index 1538a50..b14a10f 100644
+--- a/ui/dat_viewer.py
