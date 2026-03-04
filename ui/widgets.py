@@ -314,12 +314,18 @@ class ADTFImageDisplayWidget(QWidget):
     
     def open_image_window(self):
         """Opens a separate window to display the image"""
+        prev_geometry = None
         if self.image_window is not None:
+            prev_geometry = self.image_window.geometry()
             self.image_window.close()
         
         self.image_window = QMainWindow()
         self.image_window.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1}")
-        self.image_window.resize(1280, 720)
+        
+        if prev_geometry:
+            self.image_window.setGeometry(prev_geometry)
+        else:
+            self.image_window.resize(1280, 720)
         
         # Create central widget with layout
         central_widget = QWidget()
@@ -370,9 +376,13 @@ class ADTFImageDisplayWidget(QWidget):
         
         QShortcut(QKeySequence(Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(1))
         QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(10))
+        QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(30))
+        QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(300))
         
         QShortcut(QKeySequence(Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(1))
         QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(10))
+        QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(30))
+        QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(300))
         
         # Update the display
         self.update_image_window()
