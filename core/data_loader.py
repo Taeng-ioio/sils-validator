@@ -109,9 +109,33 @@ class ADTFLoader:
             if not item or item.stream_id != self.image_stream_id:
                 return None
             
-            # Convert buffer to numpy array (standard 8-bit format)
-            img = np.frombuffer(item.sample.buffer, dtype=np.uint8)
+            buffer = item.sample.buffer
+            buffer_len = len(buffer)
+            
+            target_size_8bit = self.image_shape[0] * self.image_shape[1]
+            
+            # 1. Check exact size match for user's legacy 8-bit shape
+            if buffer_len == target_size_8bit:
+                img = np.frombuffer(buffer, dtype=np.uint8)
+                img = np.reshape(img, self.image_shape)
+                return img
+                
+            # 2. Check 16-bit 1984x2560 case (10,158,080 bytes)
+            # This handles the specific DAT file the user is currently struggling with
+            if buffer_len == 10158080:
+                import cv2
+                img16 = np.frombuffer(buffer, dtype=np.uint16)
+                img2d = np.reshape(img16, (1984, 2560))
+                # Scale properly to 8-bit using max contrast
+                img8 = cv2.normalize(img2d, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+                # MUST convert to contiguous RGB here! User's `np.stack` breaks `QImage` memory layout
+                img_rgb = cv2.cvtColor(img8, cv2.COLOR_GRAY2RGB)
+                return img_rgb
+            
+            # 3. Fallback: try raw reshape with user's original logic as a last resort
+            img = np.frombuffer(buffer, dtype=np.uint8)
             img = np.reshape(img, self.image_shape)
+            return img
             
             return img
         except Exception as e:
