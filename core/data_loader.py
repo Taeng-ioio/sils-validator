@@ -123,16 +123,14 @@ class ADTFLoader:
             # 2. Check 16-bit 1984x2560 case (10,158,080 bytes)
             # This handles the specific DAT file the user is currently struggling with
             if buffer_len == 10158080:
-                import cv2
-                # Treat as UYVY format (2 bytes per pixel)
-                # UYVY swap fixes the neon green/purple chroma artifact seen in standard YUYV
-                # The camera is actually Portrait Mode (2560 Height, 1984 Width), not Landscape
-                img_yuv = np.frombuffer(buffer, dtype=np.uint8).reshape((2560, 1984, 2))
+                # Based on the ADTF analysis, this is 10-bit Raw Grayscale (LSB-aligned) data
+                # where the maximum value is 1023 (0x03FF) in a 16-bit container.
+                img16 = np.frombuffer(buffer, dtype=np.uint16).reshape((1984, 2560))
                 
-                # Convert UYVY 4:2:2 to standard RGB (3 bytes per pixel)
-                img_rgb = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2RGB_UYVY)
+                # Shift right by 2 to convert 10-bit (0-1023) to 8-bit (0-255) safely 
+                img8 = (img16 >> 2).astype(np.uint8)
                 
-                return img_rgb
+                return img8
             
             # 3. Fallback: try raw reshape with user's original logic as a last resort
             img = np.frombuffer(buffer, dtype=np.uint8)
