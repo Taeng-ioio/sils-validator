@@ -110,14 +110,16 @@ class ADTFLoader:
                 return None
             
             buffer = item.sample.buffer
-            buffer_len = len(buffer)
+            
+            # Use numpy directly to parse the C++ SampleBuffer since it lacks __len__
+            img_bytes = np.frombuffer(buffer, dtype=np.uint8)
+            buffer_len = img_bytes.size
             
             target_size_8bit = self.image_shape[0] * self.image_shape[1]
             
             # 1. Check exact size match for user's legacy 8-bit shape
             if buffer_len == target_size_8bit:
-                img = np.frombuffer(buffer, dtype=np.uint8)
-                img = np.reshape(img, self.image_shape)
+                img = np.reshape(img_bytes, self.image_shape)
                 return img
                 
             # 2. Check 16-bit 1984x2560 case (10,158,080 bytes)
@@ -125,7 +127,7 @@ class ADTFLoader:
             if buffer_len == 10158080:
                 # Based on the ADTF analysis, this is 10-bit Raw Grayscale (LSB-aligned) data
                 # where the maximum value is 1023 (0x03FF) in a 16-bit container.
-                img16 = np.frombuffer(buffer, dtype=np.uint16).reshape((1984, 2560))
+                img16 = img_bytes.view(np.uint16).reshape((1984, 2560))
                 
                 # Shift right by 2 to convert 10-bit (0-1023) to 8-bit (0-255) safely 
                 img8 = (img16 >> 2).astype(np.uint8)
@@ -139,8 +141,7 @@ class ADTFLoader:
                     f.write(f"WARNING: Unexpected buffer_len: {buffer_len}. Expected 10158080 or {target_size_8bit}.\n")
             
             # 3. Fallback: try raw reshape with user's original logic as a last resort
-            img = np.frombuffer(buffer, dtype=np.uint8)
-            img = np.reshape(img, self.image_shape)
+            img = np.reshape(img_bytes, self.image_shape)
             return img
             
         except Exception as e:
