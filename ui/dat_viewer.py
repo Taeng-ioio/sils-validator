@@ -95,7 +95,8 @@ class DatViewerWindow(QMainWindow):
                 )
                 self.image_label.setPixmap(scaled_pixmap)
             else:
-                self.image_label.setText("Error decoding frame.")
+                err_msg = getattr(self.loader, 'last_error', "Unknown error")
+                self.image_label.setText(f"Error decoding frame:\n{err_msg}")
             
             time_val = index * 0.033
             self.info_label.setText(f"Frame: {index + 1} / {self.total_frames} | Time: {time_val:.3f}s")

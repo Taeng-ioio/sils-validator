@@ -63,6 +63,7 @@ class ADTFLoader:
         self.image_stream_id = None
         self.current_frame_index = 0
         self.image_shape = (1985, 2560)
+        self.last_error = ""
         
     def load_file(self, file_path):
         """
@@ -83,9 +84,10 @@ class ADTFLoader:
                 raise ValueError("이미지 스트림을 찾을 수 없습니다. (Image0 또는 DTSImage0)")
             
             self.current_frame_index = 0
-            
+            self.last_error = ""
             return True
         except Exception as e:
+            self.last_error = f"Load file exception: {str(e)}"
             raise e
     
     def get_frame(self, frame_index):
@@ -106,7 +108,14 @@ class ADTFLoader:
             self.reader.seek_to(item_idx)
             item = self.reader.get_next_item()
             
-            if not item or item.stream_id != self.image_stream_id:
+            if not item:
+                self.last_error = f"Failed to get next item at frame {frame_index}"
+                return None
+            if item.stream_id != self.image_stream_id:
+                self.last_error = f"Stream ID mismatch: got {item.stream_id}, expected {self.image_stream_id}"
+                return None
+            if not item.sample or not item.sample.buffer:
+                self.last_error = "Item sample or buffer is empty"
                 return None
             
             # Convert buffer to numpy array
@@ -121,6 +130,9 @@ class ADTFLoader:
                 # Raw RGB
                 img = np.reshape(img_buffer, (self.image_shape[0], self.image_shape[1], 3))
                 return img
+            elif len(img_buffer) == 0:
+                self.last_error = "Buffer length is 0 bytes"
+                return None
             else:
                 # Attempt to decode as generic encoded image (JPEG, PNG, etc)
                 import cv2
@@ -131,10 +143,11 @@ class ADTFLoader:
                         decoded = cv2.cvtColor(decoded, cv2.COLOR_BGR2RGB)
                     return decoded
                 else:
+                    self.last_error = f"cv2.imdecode failed on buffer of length: {len(img_buffer)} bytes"
                     return None
                     
         except Exception as e:
-            print(f"Exception in get_frame({frame_index}): {e}")
+            self.last_error = f"Exception in decode: {str(e)}"
             return None
     
     def get_next_frame(self):
