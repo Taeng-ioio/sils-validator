@@ -131,14 +131,20 @@ class ADTFLoader:
                 img8 = (img16 >> 2).astype(np.uint8)
                 
                 return img8
+            else:
+                # Log unexpected buffer sizes to diagnose the black screen
+                with open("/Volumes/T7/Project/LGE/sils-validator/ui_error.txt", "a") as f:
+                    f.write(f"WARNING: Unexpected buffer_len: {buffer_len}. Expected 10158080 or {target_size_8bit}.\n")
             
             # 3. Fallback: try raw reshape with user's original logic as a last resort
             img = np.frombuffer(buffer, dtype=np.uint8)
             img = np.reshape(img, self.image_shape)
             return img
             
-            return img
         except Exception as e:
+            import traceback
+            with open("/Volumes/T7/Project/LGE/sils-validator/ui_error.txt", "a") as f:
+                f.write(f"ERROR in get_frame: {e}\n{traceback.format_exc()}\n")
             return None
     
     def get_next_frame(self):
