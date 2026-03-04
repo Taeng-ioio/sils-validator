@@ -14,7 +14,6 @@ from ui.widgets import TimelineWidget, ADTFImageDisplayWidget
 from ui.batch_dialog import BatchResultDialog
 from ui.macro_dialog import MacroDialog
 from ui.or_rule_dialog import ORRuleDialog
-from ui.dat_viewer import DatViewerWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -1067,14 +1066,10 @@ class MainWindow(QMainWindow):
         if target_lookup in self.dat_file_map:
             matched_path = self.dat_file_map[target_lookup]
             
-            # Reuse existing viewer if it is already open to prevent flickering
-            if hasattr(self, 'dat_viewer_window') and self.dat_viewer_window is not None and self.dat_viewer_window.isVisible():
-                self.dat_viewer_window.dat_file_path = matched_path
-                self.dat_viewer_window.setWindowTitle(f"DAT Viewer - {os.path.basename(matched_path)}")
-                self.dat_viewer_window.load_dat_file()
-            else:
-                self.dat_viewer_window = DatViewerWindow(matched_path, self)
-                self.dat_viewer_window.show()
+            # Use the user's original ADTFImageDisplayWidget to cleanly pop up and load the file!
+            if hasattr(self, 'adtf_display'):
+                self.adtf_display.load_adtf_file_from_path(matched_path)
+                
         else:
             print(f"No matching .dat file found for '{target_dat_name}' in the loaded DAT folder.")
 
