@@ -133,23 +133,11 @@ class ADTFLoader:
                 img8 = (img16 >> 2).astype(np.uint8)
                 
                 return img8
-            else:
-                # Log unexpected buffer sizes to diagnose the black screen
-                import os
-                error_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ui_error.txt')
-                with open(error_file, "a") as f:
-                    f.write(f"WARNING: Unexpected buffer_len: {buffer_len}. Expected 10158080 or {target_size_8bit}.\n")
-            
             # 3. Fallback: try raw reshape with user's original logic as a last resort
             img = np.reshape(img_bytes, self.image_shape)
             return img
             
         except Exception as e:
-            import traceback
-            import os
-            error_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ui_error.txt')
-            with open(error_file, "a") as f:
-                f.write(f"ERROR in get_frame: {e}\n{traceback.format_exc()}\n")
             return None
     
     def get_next_frame(self):

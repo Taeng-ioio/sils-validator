@@ -35,6 +35,22 @@ class MainWindow(QMainWindow):
 
         self.init_ui()
         self.setup_shortcuts()
+        self.auto_load_master_config()
+
+    def auto_load_master_config(self):
+        import os
+        from PyQt6.QtWidgets import QMessageBox
+        
+        # Resolve the root directory (parent of the /ui folder)
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        auto_config_path = os.path.join(root_dir, "master_config.json")
+        
+        if os.path.exists(auto_config_path):
+            try:
+                self.inspector_logic.load_master_config(auto_config_path)
+                QMessageBox.information(self, "Config Loaded", f"Automatically loaded master config:\n{auto_config_path}")
+            except Exception as e:
+                print(f"Failed to auto-load master config: {e}")
 
     def init_ui(self):
         main_widget = QWidget()

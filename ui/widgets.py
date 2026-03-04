@@ -353,16 +353,20 @@ class ADTFImageDisplayWidget(QWidget):
         self.scroll_area.setWidget(self.image_container)
         self.image_layout = QVBoxLayout(self.image_container)
         
+        from PyQt6.QtWidgets import QSizePolicy
+        
         # Create label for image display
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setStyleSheet("background-color: black;")
+        self.image_label.setScaledContents(True) # Allow smooth user-driven scaling stretching
         self.image_layout.addWidget(self.image_label, stretch=1)
         
         # Create label for frame info
         self.frame_info_label_window = QLabel()
         self.frame_info_label_window.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.frame_info_label_window.setStyleSheet("background-color: rgba(0, 0, 0, 150); color: white; font-weight: bold; padding: 5px;")
+        self.frame_info_label_window.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
         # Add index * 0.033 calculation requirement here
         time_s = self.current_index * 0.033
@@ -375,6 +379,7 @@ class ADTFImageDisplayWidget(QWidget):
         self.frame_slider.setValue(self.current_index)
         self.frame_slider.valueChanged.connect(self.on_frame_slider_changed)
         self.frame_slider.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Prevent slider from stealing arrow keys
+        self.frame_slider.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self.frame_slider)
         
         # Make sure the window gets focus and handles key events
@@ -400,56 +405,45 @@ class ADTFImageDisplayWidget(QWidget):
     
     def update_image_window(self):
         """Updates the image in the separate window"""
-        try:
-            if self.current_frame is not None and self.image_window is not None:
-                # Convert numpy array to QImage
-                # ADTF image is grayscale (2D), convert to RGB (3D)
-                if len(self.current_frame.shape) == 2:
-                    # Grayscale to RGB conversion
-                    height, width = self.current_frame.shape
-                    img_rgb = np.stack([self.current_frame] * 3, axis=2)
-                else:
-                    img_rgb = self.current_frame
-                
-                height, width, channel = img_rgb.shape
-                bytes_per_line = 3 * width
-                q_img = QImage(
-                    img_rgb.data,
-                    width,
-                    height,
-                    bytes_per_line,
-                    QImage.Format.Format_RGB888
-                )
-                
-                # Scale image to fit window
-                pixmap = QPixmap.fromImage(q_img)
-                scaled_pixmap = pixmap.scaled(
-                    self.image_window.size(),
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
-                )
-                
-                self.image_label.setPixmap(scaled_pixmap)
-                
-                # Prevent window from resizing when image is updated
-                self.image_window.setFixedSize(self.image_window.size())
-                
-                # Update window title with frame index
-                self.image_window.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1} / {self.total_frames}")
-                
-                # Update frame info label in window
-                time_s = self.current_index * 0.033
-                self.frame_info_label_window.setText(f"Index: {self.current_index} | Time: {time_s:.3f}s / {self.total_frames}")
+        if self.current_frame is not None and self.image_window is not None:
+            # Convert numpy array to QImage
+            # ADTF image is grayscale (2D), convert to RGB (3D)
+            if len(self.current_frame.shape) == 2:
+                # Grayscale to RGB conversion
+                height, width = self.current_frame.shape
+                img_rgb = np.stack([self.current_frame] * 3, axis=2)
+            else:
+                img_rgb = self.current_frame
             
-            # Update frame info in main widget
-            self.frame_info_label.setText(f"Frame: {self.current_index + 1} / {self.total_frames}")
-        except Exception as e:
-            import traceback
-            import os
-            error_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ui_error.txt')
-            with open(error_file, "w") as f:
-                f.write(traceback.format_exc())
-            print(f"CRITICAL UI ERROR: {e}")
+            height, width, channel = img_rgb.shape
+            bytes_per_line = 3 * width
+            q_img = QImage(
+                img_rgb.data,
+                width,
+                height,
+                bytes_per_line,
+                QImage.Format.Format_RGB888
+            )
+            
+            # Scale image to fit window
+            pixmap = QPixmap.fromImage(q_img)
+            scaled_pixmap = pixmap.scaled(
+                self.image_window.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            
+            self.image_label.setPixmap(scaled_pixmap)
+            
+            # Update window title with frame index
+            self.image_window.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1} / {self.total_frames}")
+            
+            # Update frame info label in window
+            time_s = self.current_index * 0.033
+            self.frame_info_label_window.setText(f"Index: {self.current_index} | Time: {time_s:.3f}s / {self.total_frames}")
+        
+        # Update frame info in main widget
+        self.frame_info_label.setText(f"Frame: {self.current_index + 1} / {self.total_frames}")
     
     def navigate_next(self, step=1):
         """Navigate to next frame"""
