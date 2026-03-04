@@ -275,11 +275,6 @@ class ADTFImageDisplayWidget(QWidget):
         # Controls layout
         controls_layout = QHBoxLayout()
         
-        # Load button
-        self.load_btn = QPushButton("Load ADTF File")
-        self.load_btn.clicked.connect(self.load_adtf_file)
-        controls_layout.addWidget(self.load_btn)
-        
         # Frame info label
         self.frame_info_label = QLabel("Frame: 0 / 0")
         self.frame_info_label.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -301,18 +296,6 @@ class ADTFImageDisplayWidget(QWidget):
         
         # Separate image window
         self.image_window = None
-    
-    def load_adtf_file(self):
-        """Opens file dialog to load ADTF file"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select ADTF File",
-            "",
-            "DAT Files (*.dat);;All Files (*)"
-        )
-        
-        if file_path:
-            self.load_adtf_file_from_path(file_path)
 
     def load_adtf_file_from_path(self, file_path):
         """Loads ADTF file directly from a given absolute path."""
@@ -343,15 +326,8 @@ class ADTFImageDisplayWidget(QWidget):
         self.image_window.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         
-        # Create scroll area for image
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        layout.addWidget(self.scroll_area)
-        
-        # Create widget to hold image
-        self.image_container = QWidget()
-        self.scroll_area.setWidget(self.image_container)
-        self.image_layout = QVBoxLayout(self.image_container)
+        # Point the old image_layout to the main central layout
+        self.image_layout = layout
         
         from PyQt6.QtWidgets import QSizePolicy
         
@@ -360,6 +336,7 @@ class ADTFImageDisplayWidget(QWidget):
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setStyleSheet("background-color: black;")
         self.image_label.setScaledContents(True) # Allow smooth user-driven scaling stretching
+        self.image_label.setMinimumSize(1, 1)    # Crucial: Allow label to shrink below its pixmap size
         self.image_layout.addWidget(self.image_label, stretch=1)
         
         # Create label for frame info
@@ -368,8 +345,8 @@ class ADTFImageDisplayWidget(QWidget):
         self.frame_info_label_window.setStyleSheet("background-color: rgba(0, 0, 0, 150); color: white; font-weight: bold; padding: 5px;")
         self.frame_info_label_window.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
-        # Add index * 0.033 calculation requirement here
-        time_s = self.current_index * 0.033
+        # Add index * (1.0/30.0) calculation requirement here
+        time_s = self.current_index * (1.0 / 30.0)
         self.frame_info_label_window.setText(f"Index: {self.current_index} | Time: {time_s:.3f}s / {self.total_frames}")
         self.image_layout.addWidget(self.frame_info_label_window)
         
@@ -439,7 +416,7 @@ class ADTFImageDisplayWidget(QWidget):
             self.image_window.setWindowTitle(f"ADTF Image Viewer - Frame {self.current_index + 1} / {self.total_frames}")
             
             # Update frame info label in window
-            time_s = self.current_index * 0.033
+            time_s = self.current_index * (1.0 / 30.0)
             self.frame_info_label_window.setText(f"Index: {self.current_index} | Time: {time_s:.3f}s / {self.total_frames}")
         
         # Update frame info in main widget
