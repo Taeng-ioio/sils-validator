@@ -891,15 +891,19 @@ class MainWindow(QMainWindow):
         # QShortcut(QKeySequence("Ctrl+E"), self, activated=self.load_next_file)
         
         self.shortcut_prev = QShortcut(QKeySequence("Ctrl+Q"), self)
+        self.shortcut_prev.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_prev.activated.connect(self.load_prev_file)
         
         self.shortcut_next = QShortcut(QKeySequence("Ctrl+E"), self)
+        self.shortcut_next.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_next.activated.connect(self.load_next_file)
 
         self.shortcut_recent = QShortcut(QKeySequence("Ctrl+R"), self)
+        self.shortcut_recent.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_recent.activated.connect(self.load_recent_config)
         
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.shortcut_save.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_save.activated.connect(self.save_config)
         
         # Spacebar shortcut for ADTF image navigation
@@ -998,11 +1002,11 @@ class MainWindow(QMainWindow):
         if values:
             info_text += " | ".join(values)
             
+        self.data_display_label.setText(info_text)
     
     def on_adtf_frame_changed(self, current_index, total_frames):
         """Handle ADTF frame change events"""
-        self.data_display_label.setText(f"ADTF Frame: {current_index + 1} / {total_frames}")
-        # self.data_display_label.setText(info_text)
+        pass
 
     def open_batch_dialog(self):
         if self.batch_dialog is None:
