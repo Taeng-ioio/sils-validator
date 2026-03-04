@@ -123,7 +123,6 @@ class ADTFLoader:
             # 2. Check 16-bit 1984x2560 case (10,158,080 bytes)
             # This handles the specific DAT file the user is currently struggling with
             if buffer_len == 10158080:
-                import cv2
                 img16 = np.frombuffer(buffer, dtype=np.uint16)
                 img2d = np.reshape(img16, (1984, 2560))
                 
@@ -136,8 +135,12 @@ class ADTFLoader:
                 else:
                     img8 = (img2d & 0xFF).astype(np.uint8) # Fallback to modulo if invariant
                     
-                # MUST convert to contiguous RGB here! User's legacy `np.stack` breaks `QImage` memory alignment
-                img_rgb = cv2.cvtColor(img8, cv2.COLOR_GRAY2RGB)
+                # MUST convert to contiguous RGB here using pure numpy!
+                # Do NOT use `cv2` (ModuleNotFoundError) or simple `np.stack` (Memory misalignment)
+                img_rgb = np.empty((1984, 2560, 3), dtype=np.uint8)
+                img_rgb[..., 0] = img8
+                img_rgb[..., 1] = img8
+                img_rgb[..., 2] = img8
                 return img_rgb
             
             # 3. Fallback: try raw reshape with user's original logic as a last resort
