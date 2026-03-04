@@ -122,6 +122,20 @@ class ADTFLoader:
             img_buffer = np.frombuffer(item.sample.buffer, dtype=np.uint8)
             
             expected_size = self.image_shape[0] * self.image_shape[1]
+            
+            # --- Newly Discovered Automotive Format (YUYV 4:2:2) ---
+            # 1984 * 2560 = 5079040 pixels. At 2 bytes per pixel (YUYV), this is exactly 10158080 bytes!
+            if len(img_buffer) == 10158080:
+                import cv2
+                try:
+                    yuyv_img = np.reshape(img_buffer, (1984, 2560, 2))
+                    # Convert automotive YUYV (YUY2) to RGB for QImage to display correctly
+                    rgb_img = cv2.cvtColor(yuyv_img, cv2.COLOR_YUV2RGB_YUYV)
+                    return rgb_img
+                except Exception as cv_e:
+                    self.last_error = f"YUYV decoding failed: {cv_e}"
+                    return None
+                    
             if len(img_buffer) == expected_size:
                 # Raw grayscale
                 img = np.reshape(img_buffer, self.image_shape)
