@@ -315,6 +315,8 @@ class InspectorLogic:
         """Loads rules and metadata from a dictionary entry."""
         if not data:
             return
+            
+        import copy
 
         if isinstance(data, list):
             # Old Format Support (Just list of rules)
@@ -326,7 +328,7 @@ class InspectorLogic:
             }
         elif isinstance(data, dict):
             # New Format
-            self.metadata = data.get("metadata", {})
+            self.metadata = copy.deepcopy(data.get("metadata", {}))
             # Ensure all keys exist (migration)
             defaults = {
                 "vehicle": "", "sw_ver": "", "test_date": "",
