@@ -109,17 +109,6 @@ class ADTFLoader:
             if not item or item.stream_id != self.image_stream_id:
                 return None
             
-            # Attempt to automatically handle 16-bit grayscale (common in automotive cameras)
-            # 1984 * 2560 * 2 = 10,158,080 bytes
-            buffer_len = len(item.sample.buffer)
-            if buffer_len == 10158080:
-                # Interpret as 16-bit integer, reshape to 1984x2560
-                img16 = np.frombuffer(item.sample.buffer, dtype=np.uint16)
-                img2d = np.reshape(img16, (1984, 2560))
-                # For QImage display, we need 8-bit, so shift bits mathematically
-                img = (img2d / 256).astype(np.uint8)
-                return img
-                
             # Convert buffer to numpy array (standard 8-bit format)
             img = np.frombuffer(item.sample.buffer, dtype=np.uint8)
             img = np.reshape(img, self.image_shape)
