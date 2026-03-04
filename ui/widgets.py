@@ -357,7 +357,7 @@ class ADTFImageDisplayWidget(QWidget):
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setStyleSheet("background-color: black;")
-        self.image_layout.addWidget(self.image_label)
+        self.image_layout.addWidget(self.image_label, stretch=1)
         
         # Create label for frame info
         self.frame_info_label_window = QLabel()
