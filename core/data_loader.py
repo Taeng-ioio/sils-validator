@@ -126,9 +126,15 @@ class ADTFLoader:
                 import cv2
                 img16 = np.frombuffer(buffer, dtype=np.uint16)
                 img2d = np.reshape(img16, (1984, 2560))
-                # Scale properly to 8-bit using max contrast
-                img8 = cv2.normalize(img2d, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                # MUST convert to contiguous RGB here! User's `np.stack` breaks `QImage` memory layout
+                
+                # The data is 10-bit (0-1023) packed inside 16-bit.
+                # Mask out any high-bit headers/flags with 0x03FF to prevent pitch-black scaling
+                img_10bit = img2d & 0x03FF
+                
+                # Right shift by 2 converts 0-1023 -> 0-255 natively
+                img8 = (img_10bit >> 2).astype(np.uint8)
+                
+                # MUST convert to contiguous RGB here! User's legacy `np.stack` breaks `QImage` memory alignment
                 img_rgb = cv2.cvtColor(img8, cv2.COLOR_GRAY2RGB)
                 return img_rgb
             
