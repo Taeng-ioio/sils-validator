@@ -2,7 +2,7 @@ import pyqtgraph as pg
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QSlider, QDoubleSpinBox, QPushButton, QFileDialog,
                              QMainWindow, QScrollArea)
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QImage, QPixmap
 import numpy as np
 
