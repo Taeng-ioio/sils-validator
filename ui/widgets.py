@@ -266,6 +266,8 @@ class TimelineWidget(QWidget):
 
 class ADTFImageDisplayWidget(QWidget):
     frame_changed = pyqtSignal(int, int)  # current_index, total_frames
+    set_range_start_requested = pyqtSignal(float)
+    set_range_end_requested = pyqtSignal(float)
     
     def __init__(self):
         super().__init__()
@@ -378,6 +380,13 @@ class ADTFImageDisplayWidget(QWidget):
         QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(10))
         QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(30))
         QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(300))
+        
+        QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Up), self.image_window).activated.connect(
+            lambda: self.set_range_start_requested.emit(self.current_index * (1.0 / 30.0))
+        )
+        QShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Down), self.image_window).activated.connect(
+            lambda: self.set_range_end_requested.emit(self.current_index * (1.0 / 30.0))
+        )
         
         QShortcut(QKeySequence(Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(1))
         QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.image_window).activated.connect(lambda: self.navigate_next(10))

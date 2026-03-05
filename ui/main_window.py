@@ -293,6 +293,10 @@ class MainWindow(QMainWindow):
         self.timeline.time_changed.connect(self.on_time_changed)
         viz_layout.addWidget(self.timeline)
         
+        # Connect ADTF range shortcuts to timeline
+        self.adtf_display.set_range_start_requested.connect(self.timeline.spin_start.setValue)
+        self.adtf_display.set_range_end_requested.connect(self.timeline.spin_end.setValue)
+        
         right_splitter.addWidget(viz_container)
         
         # --- Bottom: Rules Container ---
