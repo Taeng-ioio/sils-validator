@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QFileDialog, QComboBox, QListWidget,
                              QMessageBox, QFrame, QSplitter, QLineEdit, QRadioButton,
                              QButtonGroup, QTableWidget, QTableWidgetItem, QHeaderView,
+                             QCompleter, QSlider, QDoubleSpinBox, QGroupBox, QDateEdit,
                              QPlainTextEdit, QSpinBox, QScrollArea, QDialog)
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QDate
