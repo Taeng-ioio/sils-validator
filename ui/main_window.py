@@ -2,8 +2,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QFileDialog, QComboBox, QListWidget,
                              QMessageBox, QFrame, QSplitter, QLineEdit, QRadioButton,
                              QButtonGroup, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QCompleter, QSlider, QDoubleSpinBox, QGroupBox, QDateEdit,
-                             QPlainTextEdit, QSpinBox, QScrollArea)
+                             QPlainTextEdit, QSpinBox, QScrollArea, QDialog)
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QDate
 from core.data_loader import ExcelLoader, ADTFLoader
@@ -1271,46 +1270,74 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to load recent config: {e}")
 
     def show_guide_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("SILS Validator - 사용 가이드")
+        dialog.setMinimumSize(850, 650)
+        
+        layout = QVBoxLayout(dialog)
+        
+        scroll_area = QScrollArea(dialog)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        
         guide_text = """
-        <h3>💡 [SILS Validator - 사용 가이드]</h3>
+        <h3>💡 &lt; SILS Validator - 사용 가이드 &gt;</h3>
 
         <b>1. 툴의 목적</b><br>
-        본 툴은 시뮬레이터 로그 파일(Excel/CSV)과 주행 영상(DAT)을 프레임 단위로 동기화하여 시각적으로 분석하고, 사용자가 정의한 특정 조건(Rule)이 올바르게 동작했는지 자동으로 검증(Validation)하기 위해 제작되었습니다.<br><br>
+        본 툴은 기존 취득된 dat파일을 신규 SW로 SILS 재검증하고, 사용자가 정의한 특정 조건(Rule)이 올바르게 동작했는지 자동으로 검증(Validation)하기 위해 제작되었습니다.<br><br>
 
         <b>2. 기본 사용 방법</b><br>
-        - <b>데이터 불러오기</b>: 상단의 <code>[Select File]</code> 또는 <code>[Select Folder]</code>로 분석할 로그 데이터를 선택합니다. 주행 카메라 영상을 함께 보려면 <code>[Select DAT Folder]</code>를 눌러 영상 폴더를 지정하세요.<br>
+        - <b>Config 불러오기</b>: 기존 설정된 Rule 파일을 <code>[Load Master Config]</code> 버튼을 통해 불러옵니다.<br>
+        - <b>데이터 불러오기</b>: 상단의 <code>[Select File]</code> 또는 <code>[Select Folder]</code>로 신규 SW SILS로 취득된 lgeresult파일을 선택합니다. 주행 카메라 영상을 함께 보려면 <code>[Select DAT Folder]</code>를 눌러 영상 폴더를 지정하세요.<br>
+        - 자동으로 lgeresult 파일과 dat파일 이름을 매칭하여 이미지가 표시됩니다.<br>
+        - <b>Test Information</b>: 차종, 버전, 평가일, 카테고리 등 기록을 남기고 우측 상단의 <code>[Save Master Config]</code> 버튼을 통해 내용을 저장합니다.<br>
         - <b>Topics 확인</b>: 좌측 패널에서 분석할 변수(Topic)를 체킹하면 중앙 그래프 화면에 시계열 데이터가 나타납니다.<br><br>
 
         <b>3. 영상 및 타임라인 컨트롤 (단축키)</b><br>
-        - 영상 창(DAT Viewer)을 클릭한 상태에서 아래 단축키로 검색이 가능합니다.<br>
-        &nbsp;&nbsp;&nbsp;• <code>Spacebar</code> : 영상 연속 재생 / 일시정지 (자동 30fps 로드)<br>
+        영상 창(DAT Viewer)을 클릭한 상태에서 아래 단축키로 프레임을 빠르고 정밀하게 탐색할 수 있습니다.<br>
+        &nbsp;&nbsp;&nbsp;• <code>Spacebar</code> : 영상 재생 및 일시정지<br>
         &nbsp;&nbsp;&nbsp;• <code>←</code> / <code>→</code> : 1 프레임 단위 이동<br>
         &nbsp;&nbsp;&nbsp;• <code>Shift + ← / →</code> : 10 프레임 이동<br>
         &nbsp;&nbsp;&nbsp;• <code>Ctrl + ← / →</code> : 30 프레임 (1초) 이동<br>
         &nbsp;&nbsp;&nbsp;• <code>Ctrl + Shift + ← / →</code> : 300 프레임 (10초) 이동<br>
-        &nbsp;&nbsp;&nbsp;• <code>Ctrl + ↑ / ↓</code> : 타임라인의 파란색 Rule 구간(Start/End)을 현재 영상 시간으로 즉석 지정<br><br>
+        &nbsp;&nbsp;&nbsp;• <code>Ctrl + ↑ / ↓</code> : 현재 영상이 멈춘 프레임의 시간을 Rule 시작(Start) / 끝(End) 구간으로 즉석 지정<br><br>
 
-        <b>4. 자동 검증 (Validation Rule)</b><br>
-        특정 구간에서 로직이 의도대로 작동했는지 검사하려면 우측 하단의 <b>Rule</b> 기능을 추가하세요.<br>
-        &nbsp;&nbsp;&nbsp;• <b>Must</b>: 해당 구간에서 값이 대상 값과 100% 일치해야 함<br>
-        &nbsp;&nbsp;&nbsp;• <b>ShouldNot</b>: 해당 값이 절대 나오지 않아야 함<br>
+        <b>4. 검증 Rule 추가 (Add Validation Rule)</b><br>
+        Visualization & Inspector의 시간 축을 설정하세요. 그래프의 파란 범위를 조절하거나 아래의 수치를 직접 조절하세요.<br>
+        Add Validation Rule에서 Topic, Target value, 검증 방법을 선택하여 <code>[Add Rule]</code>을 선택하세요.<br><br>
+        &nbsp;&nbsp;&nbsp;• <b>Must</b>: 해당 구간에서 값이 대상 값과 100% 일치해야 함 (PASS)<br>
+        &nbsp;&nbsp;&nbsp;• <b>ShouldNot</b>: 해당 구간에서 해당 값이 절대 나오지 않아야 함<br>
         &nbsp;&nbsp;&nbsp;• <b>Exist</b>: 해당 구간 내에서 값이 한 번이라도 나타나야 함<br>
         &nbsp;&nbsp;&nbsp;• <b>Maybe</b>: <code>Tolerance(초)</code>로 지정한 시간만큼은 값이 달라도 허용함<br>
-        &nbsp;&nbsp;&nbsp;• <b>Must (OR)</b>: 다중 토픽 중 하나라도 성립시 PASS 처리<br><br>
+        &nbsp;&nbsp;&nbsp;• <b>Must (OR)</b>: 지정된 여러 토픽/값 쌍 중 하나라도 만족하면 PASS 처리<br><br>
 
         <b>5. 설정 저장 및 일괄 처리</b><br>
-        - 세팅한 토픽 및 Rule은 <code>[Save Master Config]</code> (<code>Ctrl+S</code>)를 통해 통합 보관됩니다.<br>
-        - 이전 파일에서 보던 설정을 방금 연 새 창에 그대로 입혀보려면 <code>Ctrl+R</code>을 누르세요.<br>
-        - 수십 개의 파일을 한 번에 검증하고 싶을 때는 <code>[Batch Run]</code>을 활용하면 매우 효과적입니다.
+        - 세팅한 Rule과 토픽 정보는 <code>[Save Master Config]</code>(<code>Ctrl+S</code>)를 통해 통합 저장됩니다.<br>
+        - 이전 데이터의 설정을 그대로 시험해보고 싶다면 <code>Ctrl+R</code>을 누르세요.<br>
+        - 다량의 파일을 한 번에 검증하고 싶을 때는 <code>[Batch Run]</code> 기능을 사용하시면 됩니다.<br>
+        - 이전/이후 엑셀 파일을 선택하고 싶다면 상단의 버튼 혹은 <code>Ctrl+Q/E</code> 단축키를 사용하세요.
         """
-        msg = QMessageBox(self)
-        msg.setWindowTitle("사용 가이드")
-        msg.setTextFormat(Qt.TextFormat.RichText)
-        msg.setText(guide_text)
         
-        # Make the QMessageBox significantly wider so text doesn't wrap awkwardly
-        msg.setMinimumWidth(700)
+        label = QLabel(guide_text)
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.setWordWrap(True)
+        label.setStyleSheet("font-size: 14px; line-height: 1.6;")
         
-        # Ensure 'Ok' button is easily actionable
-        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        msg.exec()
+        content_layout.addWidget(label)
+        content_widget.setLayout(content_layout)
+        scroll_area.setWidget(content_widget)
+        
+        layout.addWidget(scroll_area)
+        
+        close_btn = QPushButton("닫기")
+        close_btn.clicked.connect(dialog.accept)
+        close_btn.setMinimumHeight(40)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet("font-weight: bold; background-color: #28a745; color: white; border-radius: 5px;")
+        
+        layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        dialog.exec()
