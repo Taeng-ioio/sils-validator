@@ -297,6 +297,11 @@ class ADTFImageDisplayWidget(QWidget):
         self.frame_info_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         controls_layout.addWidget(self.frame_info_label)
         
+        # Playback system
+        self.play_timer = QTimer(self)
+        self.play_timer.timeout.connect(self.play_next_frame)
+        self.is_playing = False
+        
         self.layout.addLayout(controls_layout)
         
         # ADTF loader
@@ -329,6 +334,20 @@ class ADTFImageDisplayWidget(QWidget):
         except Exception as e:
             print(f"Error loading ADTF file: {e}")
     
+    def toggle_playback(self):
+        if self.is_playing:
+            self.play_timer.stop()
+            self.is_playing = False
+        else:
+            self.play_timer.start(33) # roughly 30 fps
+            self.is_playing = True
+            
+    def play_next_frame(self):
+        if self.current_index < self.total_frames - 1:
+            self.navigate_next(1)
+        else:
+            self.toggle_playback() # Auto stop at the end
+            
     def open_image_window(self):
         """Opens a separate window to display the image"""
         prev_geometry = None
@@ -388,8 +407,7 @@ class ADTFImageDisplayWidget(QWidget):
         
         # Setup precise keyboard shortcuts instead of relying on eventFilters that might be swallowed
         from PyQt6.QtGui import QShortcut, QKeySequence
-        
-        QShortcut(QKeySequence(Qt.Key.Key_Space), self.image_window).activated.connect(lambda: self.navigate_next(1))
+        QShortcut(QKeySequence(Qt.Key.Key_Space), self.image_window).activated.connect(self.toggle_playback)
         
         QShortcut(QKeySequence(Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(1))
         QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.image_window).activated.connect(lambda: self.navigate_previous(10))
