@@ -148,8 +148,10 @@ class TimelineWidget(QWidget):
             region.sigRegionChanged.connect(self.on_region_dragged)
             p.addItem(region)
             self.regions.append(region)
-            
             self.plots.append(p)
+            
+        # Restore the regions from the active spin box inputs
+        self.update_timeline_from_inputs()
 
     def on_cursor_dragged(self, sender):
         if self.updating_cursor: return
@@ -232,6 +234,19 @@ class TimelineWidget(QWidget):
         for r in self.regions:
             r.setRegion((start, end))
         self.updating_region = False
+        
+        # Keep sliders in sync
+        max_time = 1.0
+        if self.current_time_data is not None and len(self.current_time_data) > 0:
+            max_time = self.current_time_data[-1]
+            if max_time <= 0: max_time = 1.0
+
+        self.slider_start.blockSignals(True)
+        self.slider_end.blockSignals(True)
+        self.slider_start.setValue(int((start / max_time) * 1000))
+        self.slider_end.setValue(int((end / max_time) * 1000))
+        self.slider_start.blockSignals(False)
+        self.slider_end.blockSignals(False)
 
     def get_selected_range(self):
         if self.regions:
