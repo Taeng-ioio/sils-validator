@@ -2,9 +2,9 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QFileDialog, QComboBox, QListWidget,
                              QMessageBox, QFrame, QSplitter, QLineEdit, QRadioButton,
                              QButtonGroup, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QCompleter, QSlider, QDoubleSpinBox, QGroupBox, QDateEdit,
-                             QPlainTextEdit, QSpinBox, QScrollArea, QDialog)
-from PyQt6.QtGui import QAction, QKeySequence, QShortcut
+                             QCompleter, QGroupBox, QDateEdit, QPlainTextEdit,
+                             QSpinBox, QScrollArea, QDialog)
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QDate
 from core.data_loader import ExcelLoader, ADTFLoader
 from core.logic import InspectorLogic, Rule, RuleType
@@ -23,9 +23,7 @@ class MainWindow(QMainWindow):
         self.data_loader = ExcelLoader()
         self.selected_topics = []
         self.current_excel_path = None
-        self.file_list = [] # List of absolute paths
-        self.current_file_index = -1
-        self.file_list = [] # List of absolute paths
+        self.file_list = []  # List of absolute paths
         self.current_file_index = -1
         self.recent_config = None
         self.batch_dialog = None
@@ -41,19 +39,15 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(100, self.auto_load_master_config)
 
     def auto_load_master_config(self):
-        import os
-        from PyQt6.QtWidgets import QMessageBox
-        
-        # Resolve the root directory (parent of the /ui folder)
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         auto_config_path = os.path.join(root_dir, "master_config.json")
-        
+
         if os.path.exists(auto_config_path):
             try:
                 self.inspector_logic.load_master_config(auto_config_path)
                 QMessageBox.information(self, "Config Loaded", f"Automatically loaded master config:\n{auto_config_path}")
             except Exception as e:
-                print(f"Failed to auto-load master config: {e}")
+                QMessageBox.critical(self, "Error", f"Failed to auto-load master config:\n{e}")
 
     def init_ui(self):
         main_widget = QWidget()
@@ -345,9 +339,6 @@ class MainWindow(QMainWindow):
             QPushButton:pressed {
                 background-color: #bd2130;
             }
-            QPushButton:pressed {
-                background-color: #bd2130;
-            }
         """)
 
     def _style_secondary_button(self, btn: QPushButton):
@@ -542,12 +533,17 @@ class MainWindow(QMainWindow):
     def on_rule_changed(self, row, col):
         # ["Start", "End", "Topic", "Cond", "Value", "Tol(s)"]
         # Attributes: start_time, end_time, topic, rule_type, target_value, tolerance
-        val = self.rules_table.item(row, col).text()
-        # Current rules
+        item = self.rules_table.item(row, col)
+        if item is None:
+            return
+
+        val = item.text()
         rules = self.inspector_logic.get_rules()
-        if row >= len(rules): return
+        if row >= len(rules):
+            return
+
         rule = rules[row]
-        
+
         try:
             updates = {}
             if col == 0:
@@ -556,30 +552,29 @@ class MainWindow(QMainWindow):
                 updates['end_time'] = float(val)
             elif col == 2:
                 if rule.rule_type == RuleType.MUST_OR:
-                    updates['topic'] = [t.strip() for t in val.split('|')]
+                    updates['topic'] = [t.strip() for t in val.split('|') if t.strip()]
                 else:
                     updates['topic'] = val
             elif col == 3:
-                # Basic validation for Rule Type
                 if val in [RuleType.MUST, RuleType.SHOULD_NOT, RuleType.EXIST, RuleType.MUST_OR, RuleType.MAYBE]:
                     updates['rule_type'] = val
             elif col == 4:
                 if rule.rule_type == RuleType.MUST_OR:
-                    updates['target_value'] = [v.strip() for v in val.split('|')]
+                    updates['target_value'] = [v.strip() for v in val.split('|') if v.strip()]
                 else:
                     updates['target_value'] = val
             elif col == 5:
                 updates['tolerance'] = float(val)
-            
+
             if updates:
                 self.inspector_logic.update_rule(row, **updates)
                 if 'topic' in updates:
-                    ts = updates['topic'] if isinstance(updates['topic'], list) else [updates['topic']]
-                    for t in ts:
-                        self.add_topic_to_table(t)
+                    topics = updates['topic'] if isinstance(updates['topic'], list) else [updates['topic']]
+                    for topic in topics:
+                        self.add_topic_to_table(topic)
         except Exception as e:
-            # Revert or warn? For now just print/ignore to avoid annoying popups on partial edit
-            print(f"Update failed: {e}")
+            QMessageBox.warning(self, "Rule Update Error", f"Failed to update rule:\n{e}")
+            self.refresh_rules_table()
 
     def on_rule_topic_selection_changed(self, index):
         topic = self.rule_topic_combo.currentText()
@@ -654,18 +649,34 @@ class MainWindow(QMainWindow):
 
     def run_evaluation(self):
         results = self.inspector_logic.check_rules(self.data_loader)
-        
-        msg = ""
-        fail_count = 0
+
+        fail_messages = []
+        skip_count = 0
+        error_messages = []
+
         for res in results:
             if res['status'] == 'FAIL':
-                fail_count += 1
-                msg += f"FAIL: {res['rule_desc']} at frames {res['fail_frames'][:5]}...\n"
-        
-        if fail_count == 0:
-            QMessageBox.information(self, "Result", "All rules PASSED!")
+                fail_messages.append(f"FAIL: {res['rule_desc']} at frames {res['fail_frames'][:5]}...")
+            elif res['status'] == 'SKIP':
+                skip_count += 1
+            elif res['status'] == 'ERROR':
+                error_messages.append(res.get('msg', res['rule_desc']))
+
+        if error_messages:
+            QMessageBox.critical(self, "Evaluation Error", "\n".join(error_messages))
+            return
+
+        if fail_messages:
+            summary = "\n".join(fail_messages)
+            if skip_count:
+                summary += f"\n\nSkipped rules: {skip_count}"
+            QMessageBox.warning(self, "Result", f"{len(fail_messages)} rules FAILED.\n\n{summary}")
+            return
+
+        if skip_count:
+            QMessageBox.information(self, "Result", f"All evaluated rules PASSED!\nSkipped rules: {skip_count}")
         else:
-            QMessageBox.warning(self, "Result", f"{fail_count} rules FAILED.\n\n{msg}")
+            QMessageBox.information(self, "Result", "All rules PASSED!")
 
     def open_master_config_dialog(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Open Master Config", "", "JSON Files (*.json)")
@@ -823,7 +834,7 @@ class MainWindow(QMainWindow):
                 shortcut = shell.CreateShortcut(lnk_path)
                 return shortcut.Targetpath
             except Exception as e:
-                print(f"Warning: Could not resolve shortcut {lnk_path} ({e})")
+                QMessageBox.warning(self, "Shortcut Resolve Error", f"Could not resolve shortcut:\n{lnk_path}\n\n{e}")
                 return None
 
         for root, dirs, files in os.walk(folder_path):
@@ -1099,13 +1110,12 @@ class MainWindow(QMainWindow):
             
         if target_lookup in self.dat_file_map:
             matched_path = self.dat_file_map[target_lookup]
-            
-            # Use the user's original ADTFImageDisplayWidget to cleanly pop up and load the file!
+
             if hasattr(self, 'adtf_display'):
-                self.adtf_display.load_adtf_file_from_path(matched_path)
-                
-        else:
-            print(f"No matching .dat file found for '{target_dat_name}' in the loaded DAT folder.")
+                try:
+                    self.adtf_display.load_adtf_file_from_path(matched_path)
+                except Exception as e:
+                    QMessageBox.critical(self, "DAT Load Error", f"Failed to load DAT file:\n{matched_path}\n\n{e}")
 
     def _load_config_for_current_excel(self):
         if not self.current_excel_path:
