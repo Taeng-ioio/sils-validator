@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QSpinBox, QScrollArea, QDialog)
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QDate
-from core.data_loader import ExcelLoader, ADTFLoader
+from core.data_loader import ExcelLoader
 from core.logic import InspectorLogic, Rule, RuleType
 import os
 
@@ -179,9 +179,9 @@ class MainWindow(QMainWindow):
         cat_layout = QHBoxLayout()
         self.input_category_combo = QComboBox()
         self.input_category_combo.addItems([
-            'ENCAP_DSM', 'ENCAP_OSM', 'ADDW', 'DDAW', 'AOI', 
-            'FATIGUE', 'EYEP', 'FMEA_DSM', 'FMEA_OSM', 'BO', 
-            'SBT', 'ACT', 'ONCAL', 'BLK'
+            'ENCAP_DSM', 'ENCAP_OSM', 'ADDW', 'DDAW', 'AOI',
+            'FATIGUE', 'EYEP', 'FMEA_DSM', 'FMEA_OSM', 'BO',
+            'SBT', 'ACT', 'ONCAL', 'BLK', 'DEGRA'
         ])
         cat_layout.addWidget(self.input_category_combo)
         
@@ -443,10 +443,19 @@ class MainWindow(QMainWindow):
         self.rules_table = QTableWidget()
         self.rules_table.setColumnCount(7)
         self.rules_table.setHorizontalHeaderLabels(["Start", "End", "Topic", "Cond", "Value", "Tol(s)", "Delete"])
-        self.rules_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        # Resize Action column to be smaller
-        self.rules_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
-        
+        rules_header = self.rules_table.horizontalHeader()
+        rules_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        rules_header.setStretchLastSection(False)
+        self.rules_table.verticalHeader().setDefaultSectionSize(44)
+        self.rules_table.setStyleSheet("QTableWidget::item { padding-top: 4px; padding-bottom: 4px; }")
+        self.rules_table.setColumnWidth(0, 80)
+        self.rules_table.setColumnWidth(1, 80)
+        self.rules_table.setColumnWidth(2, 600)
+        self.rules_table.setColumnWidth(3, 100)
+        self.rules_table.setColumnWidth(4, 100)
+        self.rules_table.setColumnWidth(5, 70)
+        self.rules_table.setColumnWidth(6, 90)
+
         self.rules_table.cellChanged.connect(self.on_rule_changed)
         self.rules_table.itemSelectionChanged.connect(self.on_rule_selection_changed)
         rule_layout.addWidget(self.rules_table)
@@ -583,26 +592,34 @@ class MainWindow(QMainWindow):
 
     def on_rule_selection_changed(self):
         selected_items = self.rules_table.selectedItems()
-        if not selected_items: return
-        
-        # Get the first selected item's row
+        if not selected_items:
+            return
+
         row = selected_items[0].row()
         rules = self.inspector_logic.get_rules()
-        if row >= len(rules): return
+        if row >= len(rules):
+            return
+
         rule = rules[row]
 
         # 1. Sync Timeline Range
         self.timeline.set_selected_range(rule.start_time, rule.end_time)
 
-        # 2. Add topic(s) to visualization
-        topic_item = self.rules_table.item(row, 2) # Topic is col 2
+        # 2. Sync selected topic into the rule topic search box
+        topic_item = self.rules_table.item(row, 2)  # Topic is col 2
         if topic_item:
             topic_str = topic_item.text()
-            # If it's an OR rule, it displays as "A | B"
-            topics = [t.strip() for t in topic_str.split('|')]
-            for t in topics:
-                if t and t not in self.selected_topics:
-                    self.add_topic_to_table(t)
+            topics = [t.strip() for t in topic_str.split('|') if t.strip()]
+
+            if topics:
+                first_topic = topics[0]
+                self.rule_topic_combo.setCurrentText(first_topic)
+                self.topic_combo.setCurrentText(first_topic)
+
+            # 3. Add topic(s) to visualization
+            for topic in topics:
+                if topic not in self.selected_topics:
+                    self.add_topic_to_table(topic)
 
     def refresh_rules_table(self):
         self.rules_table.blockSignals(True)
@@ -820,7 +837,10 @@ class MainWindow(QMainWindow):
     def load_dat_folder_dialog(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select DAT Folder")
         if folder_path:
-            self.scan_folder_for_dat(folder_path)
+            try:
+                self.scan_folder_for_dat(folder_path)
+            except Exception as e:
+                QMessageBox.critical(self, "DAT Support Error", f"DAT 기능을 사용할 수 없습니다.\n\n{e}")
 
     def scan_folder_for_dat(self, folder_path):
         self.dat_folder_path = folder_path

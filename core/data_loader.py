@@ -1,5 +1,4 @@
 import pandas as pd
-import adtf_file
 import numpy as np
 from pathlib import Path
 
@@ -21,7 +20,12 @@ class ExcelLoader:
             self.df = pd.read_excel(file_path, header=0)
 
         num_rows = len(self.df)
-        self.df['_internal_time'] = [round(i * self.time_step, 3) for i in range(num_rows)]
+        internal_time = pd.Series(
+            [round(i * self.time_step, 3) for i in range(num_rows)],
+            index=self.df.index,
+            name='_internal_time'
+        )
+        self.df = pd.concat([self.df, internal_time], axis=1).copy()
         self.topics = [col for col in self.df.columns if col != '_internal_time']
         return True
 
@@ -51,9 +55,24 @@ class ADTFLoader:
         self.image_stream_id = None
         self.current_frame_index = 0
         self.image_shape = (1985, 2560)
+        self.adtf_file = None
+
+    def _load_adtf_library(self):
+        if self.adtf_file is not None:
+            return self.adtf_file
+
+        try:
+            import adtf_file
+            self.adtf_file = adtf_file
+            return self.adtf_file
+        except Exception as e:
+            raise RuntimeError(
+                "ADTF DAT 기능을 사용할 수 없습니다. 현재 환경(macOS 등)에서는 adtf_file 라이브러리가 지원되지 않거나 설치되지 않았을 수 있습니다."
+            ) from e
 
     def load_file(self, file_path):
         """Load the ADTF .dat file and find the image stream."""
+        adtf_file = self._load_adtf_library()
         dat_name = str(Path(file_path))
         self.reader = adtf_file.create_seekablereader(dat_name)
 
