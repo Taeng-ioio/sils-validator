@@ -62,12 +62,18 @@ class BatchResultDialog(QDialog):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["File", "Status", "Fail Count", "Details", "Action"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(False)
+        header.setMinimumSectionSize(40)
+
+        self.table.setColumnWidth(0, 260)
+        self.table.setColumnWidth(1, 90)
+        self.table.setColumnWidth(2, 90)
+        self.table.setColumnWidth(3, 320)
         self.table.setColumnWidth(4, 80)
+
         self.layout.addWidget(self.table)
         
         # Export Button
