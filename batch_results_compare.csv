@@ -1,0 +1,29 @@
+file,vehicle,sw_ver,test_date,categories,tc_number,note,tests_status,tests_details,test_excels_status,test_excels_details
+test.xlsx,1,1,2026-02-05,,1,1,FAIL,1 failures: Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s),FAIL,1 failures: Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s)
+test2 copy 10.xlsx,10,10,2026-02-05,,1,1,FAIL,"4 failures: Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 1 | 0 (1.0s-2.0s), Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s), Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 3 | 4 (0.0s-1.0s)...",FAIL,"4 failures: Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 1 | 0 (1.0s-2.0s), Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s), Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 3 | 4 (0.0s-1.0s)..."
+test2 copy 11.xlsx,10,10,2026-02-05,,1,1,FAIL,"4 failures: Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 1 | 0 (1.0s-2.0s), Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s), Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 3 | 4 (0.0s-1.0s)...",FAIL,"4 failures: Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 1 | 0 (1.0s-2.0s), Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s), Must (OR) stDmsResult.u8ICC_AoIStat | stOmsResult.u8OSM_1stRow_DrvOOP == 3 | 4 (0.0s-1.0s)..."
+test2 copy 12.xlsx,12,12,2026-02-05,,,,FAIL,1 failures: Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s),FAIL,1 failures: Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s)
+test2 copy 13.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 14.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 15.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 16.xlsx,,,2026-02-05,,,,FAIL,1 failures: Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s),FAIL,1 failures: Must stDmsResult.u8ICC_AoIStat == 3 (0.0s-30.0s)
+test2 copy 17.xlsx,,,2026-02-05,,,,PASS,All rules passed.,PASS,All rules passed.
+test2 copy 18.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 19.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 2.xlsx,2,2,2026-02-04,,2,2,PASS,All rules passed.,PASS,All rules passed.
+test2 copy 20.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 21.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 22.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 23.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 24.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 25.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 26.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 3.xlsx,,,2026-02-04,,,,PASS,All rules passed.,PASS,All rules passed.
+test2 copy 4.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 5.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 6.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 7.xlsx,asdf,asdf,2026-02-04,,,,PASS,All rules passed.,PASS,All rules passed.
+test2 copy 8.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy 9.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2 copy.xlsx,,,,,,,NO_CONFIG,Config not found in Master.,NO_CONFIG,Config not found in Master.
+test2.xlsx,22,22,2026-02-05,,2,22,PASS,All rules passed.,PASS,All rules passed.
