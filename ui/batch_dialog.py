@@ -14,11 +14,14 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QFrame,
     QAbstractItemView,
+    QComboBox,
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from core.batch_processor import BatchProcessor
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 import os
-import csv
 
 
 class BatchWorker(QThread):
@@ -58,6 +61,8 @@ class BatchResultDialog(QDialog):
         self.folder_results = {}
         self.file_row_map = {}
         self.folder_column_map = {}
+        self.file_categories = {}
+        self.diff_only_enabled = False
 
         self._build_header_ui()
         self._build_progress_ui()
@@ -139,6 +144,24 @@ class BatchResultDialog(QDialog):
         self.status_label.setStyleSheet("color: #555;")
         self.layout.addWidget(self.status_label)
 
+        filter_layout = QHBoxLayout()
+        filter_layout.addWidget(QLabel("Category Filter"))
+
+        self.category_filter_combo = QComboBox()
+        self.category_filter_combo.addItem("All")
+        self.category_filter_combo.setEnabled(False)
+        self.category_filter_combo.currentTextChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.category_filter_combo)
+
+        self.diff_only_btn = QPushButton("Diff Only")
+        self.diff_only_btn.setCheckable(True)
+        self.diff_only_btn.setEnabled(False)
+        self.diff_only_btn.toggled.connect(self.apply_filters)
+        filter_layout.addWidget(self.diff_only_btn)
+        filter_layout.addStretch()
+
+        self.layout.addLayout(filter_layout)
+
     def _build_table_ui(self):
         self.table = QTableWidget()
         self.table.setColumnCount(0)
@@ -154,7 +177,7 @@ class BatchResultDialog(QDialog):
     def _build_footer_ui(self):
         export_layout = QHBoxLayout()
         export_layout.addStretch()
-        self.export_btn = QPushButton("Export Results (CSV)")
+        self.export_btn = QPushButton("Export Results (Excel)")
         self.export_btn.clicked.connect(self.export_results)
         self.export_btn.setEnabled(False)
         export_layout.addWidget(self.export_btn)
@@ -169,6 +192,65 @@ class BatchResultDialog(QDialog):
             self.folder_count_label.setText("No folders added")
         else:
             self.folder_count_label.setText(f"{count} folder(s) in comparison order")
+
+    def _parse_categories(self, raw_categories):
+        if not raw_categories:
+            return []
+        return [category.strip() for category in str(raw_categories).split("|") if category.strip()]
+
+    def _reset_category_filter(self):
+        self.file_categories = {}
+        self.category_filter_combo.blockSignals(True)
+        self.category_filter_combo.clear()
+        self.category_filter_combo.addItem("All")
+        self.category_filter_combo.setCurrentIndex(0)
+        self.category_filter_combo.setEnabled(False)
+        self.category_filter_combo.blockSignals(False)
+
+    def _refresh_category_filter_options(self):
+        selected = self.category_filter_combo.currentText() or "All"
+        all_categories = sorted(
+            {
+                category
+                for categories in self.file_categories.values()
+                for category in categories
+            }
+        )
+
+        self.category_filter_combo.blockSignals(True)
+        self.category_filter_combo.clear()
+        self.category_filter_combo.addItem("All")
+        self.category_filter_combo.addItems(all_categories)
+        self.category_filter_combo.setEnabled(True)
+
+        selected_index = self.category_filter_combo.findText(selected)
+        self.category_filter_combo.setCurrentIndex(selected_index if selected_index >= 0 else 0)
+        self.category_filter_combo.blockSignals(False)
+
+    def _is_diff_row(self, file_name):
+        row_results = []
+        for folder_name in self._folder_names():
+            result = self.folder_results.get(folder_name, {}).get(
+                file_name,
+                {
+                    "status": "MISSING",
+                    "details": "File not found.",
+                },
+            )
+            row_results.append((result.get("status", ""), result.get("details", "")))
+        return len(set(row_results)) > 1
+
+    def apply_filters(self, *_):
+        selected_category = self.category_filter_combo.currentText() or "All"
+        self.diff_only_enabled = self.diff_only_btn.isChecked()
+
+        for file_name, row in self.file_row_map.items():
+            categories = self.file_categories.get(file_name, set())
+            category_filtered = (
+                selected_category != "All" and selected_category not in categories
+            )
+            diff_filtered = self.diff_only_enabled and not self._is_diff_row(file_name)
+            self.table.setRowHidden(row, category_filtered or diff_filtered)
 
     def add_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder")
@@ -212,6 +294,8 @@ class BatchResultDialog(QDialog):
         self.current_results = {}
         self.folder_results = {}
         self.export_btn.setEnabled(False)
+        self._reset_category_filter()
+        self._reset_diff_filter()
 
         folder_names = self._folder_names()
         headers = ["File"]
@@ -260,14 +344,7 @@ class BatchResultDialog(QDialog):
 
         header = self.table.horizontalHeader()
         header.setStretchLastSection(False)
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        for col in range(1, len(headers) - 1):
-            if col % 2 == 1:
-                header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
-            else:
-                header.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
-        if headers:
-            header.setSectionResizeMode(len(headers) - 1, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
     def run_batch(self):
         if not self.selected_folders:
@@ -311,11 +388,13 @@ class BatchResultDialog(QDialog):
 
         details_item = QTableWidgetItem(res["details"])
         details_item.setToolTip(res["details"])
+        details_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         if res["status"] == "MISSING":
             details_item.setForeground(Qt.GlobalColor.gray)
 
         self.table.setItem(row, cols["status"], status_item)
         self.table.setItem(row, cols["details"], details_item)
+        self.table.resizeRowToContents(row)
 
     def on_finished(self, results):
         self.current_results = results
@@ -328,6 +407,7 @@ class BatchResultDialog(QDialog):
         self.export_btn.setEnabled(True)
 
         for file_name, row in self.file_row_map.items():
+            common_source = None
             for folder_name in self._folder_names():
                 folder_map = self.folder_results.get(folder_name, {})
                 if file_name not in folder_map:
@@ -340,6 +420,132 @@ class BatchResultDialog(QDialog):
                             "details": "File not found.",
                         },
                     )
+                elif common_source is None:
+                    candidate = folder_map.get(file_name)
+                    if candidate and candidate.get("status") != "MISSING":
+                        common_source = candidate
+
+            self.file_categories[file_name] = set(
+                self._parse_categories((common_source or {}).get("categories", ""))
+            )
+
+        self._refresh_category_filter_options()
+        self.diff_only_btn.setEnabled(len(self._folder_names()) > 1)
+        self.apply_filters()
+
+    def _visible_file_names(self):
+        visible_file_names = []
+        for row in range(self.table.rowCount()):
+            if self.table.isRowHidden(row):
+                continue
+            file_item = self.table.item(row, 0)
+            if file_item:
+                visible_file_names.append(file_item.text())
+        return visible_file_names
+
+    def _build_export_rows(self):
+        folder_names = self._folder_names()
+        common_info_fields = [
+            "vehicle",
+            "sw_ver",
+            "test_date",
+            "categories",
+            "tc_number",
+            "note",
+        ]
+        fieldnames = ["file", *common_info_fields]
+        for folder_name in folder_names:
+            fieldnames.extend(
+                [
+                    f"{folder_name}_status",
+                    f"{folder_name}_details",
+                ]
+            )
+
+        rows = []
+        for file_name_key in self._visible_file_names():
+            row = {"file": file_name_key}
+
+            common_source = None
+            for folder_name in folder_names:
+                candidate = self.folder_results.get(folder_name, {}).get(file_name_key)
+                if candidate and candidate.get("status") != "MISSING":
+                    common_source = candidate
+                    break
+
+            common_source = common_source or {
+                "vehicle": "",
+                "sw_ver": "",
+                "test_date": "",
+                "categories": "",
+                "tc_number": "",
+                "note": "",
+            }
+
+            for info_field in common_info_fields:
+                row[info_field] = common_source.get(info_field, "")
+
+            for folder_name in folder_names:
+                result = self.folder_results.get(folder_name, {}).get(
+                    file_name_key,
+                    {
+                        "status": "MISSING",
+                        "details": "File not found.",
+                    },
+                )
+                row[f"{folder_name}_status"] = result.get("status", "")
+                row[f"{folder_name}_details"] = result.get("details", "")
+
+            rows.append(row)
+
+        return fieldnames, rows
+
+    def _export_results_excel(self, file_name, fieldnames, rows):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Batch Results"
+
+        status_fills = {
+            "PASS": PatternFill(fill_type="solid", fgColor="C6EFCE"),
+            "FAIL": PatternFill(fill_type="solid", fgColor="FFC7CE"),
+        }
+        wrap_alignment = Alignment(wrap_text=True, vertical="top")
+
+        for col_idx, fieldname in enumerate(fieldnames, start=1):
+            sheet.cell(row=1, column=col_idx, value=fieldname)
+
+        for row_idx, row_data in enumerate(rows, start=2):
+            max_line_count = 1
+            for col_idx, fieldname in enumerate(fieldnames, start=1):
+                value = row_data.get(fieldname, "")
+                cell = sheet.cell(row=row_idx, column=col_idx, value=value)
+
+                if fieldname.endswith("_status"):
+                    cell_fill = status_fills.get(str(value))
+                    if cell_fill:
+                        cell.fill = cell_fill
+
+                if fieldname.endswith("_details") or fieldname == "note":
+                    cell.alignment = wrap_alignment
+                    max_line_count = max(max_line_count, str(value).count("\n") + 1)
+
+            if max_line_count > 1:
+                sheet.row_dimensions[row_idx].height = max(20, min(15 * max_line_count, 120))
+
+        for col_idx, fieldname in enumerate(fieldnames, start=1):
+            if fieldname == "file":
+                width = 28
+            elif fieldname == "note":
+                width = 48
+            elif fieldname.endswith("_status"):
+                width = 12
+            elif fieldname.endswith("_details"):
+                width = 50
+            else:
+                width = 18
+            sheet.column_dimensions[get_column_letter(col_idx)].width = width
+
+        workbook.save(file_name)
 
     def export_results(self):
         if not self.current_results:
@@ -347,69 +553,20 @@ class BatchResultDialog(QDialog):
 
         file_name, _ = QFileDialog.getSaveFileName(
             self,
-            "Save CSV",
-            "batch_results_compare.csv",
-            "CSV Files (*.csv)",
+            "Save Results",
+            "batch_results_compare.xlsx",
+            "Excel Files (*.xlsx)",
         )
         if not file_name:
             return
 
         try:
-            folder_names = self._folder_names()
-            common_info_fields = [
-                "vehicle",
-                "sw_ver",
-                "test_date",
-                "categories",
-                "tc_number",
-                "note",
-            ]
-            fieldnames = ["file", *common_info_fields]
-            for folder_name in folder_names:
-                fieldnames.extend(
-                    [
-                        f"{folder_name}_status",
-                        f"{folder_name}_details",
-                    ]
-                )
+            fieldnames, rows = self._build_export_rows()
+            extension = os.path.splitext(file_name)[1].lower()
 
-            with open(file_name, "w", newline="", encoding="utf-8-sig") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                writer.writeheader()
-
-                for file_name_key in sorted(self.file_row_map.keys()):
-                    row = {"file": file_name_key}
-
-                    common_source = None
-                    for folder_name in folder_names:
-                        candidate = self.folder_results.get(folder_name, {}).get(file_name_key)
-                        if candidate and candidate.get("status") != "MISSING":
-                            common_source = candidate
-                            break
-
-                    common_source = common_source or {
-                        "vehicle": "",
-                        "sw_ver": "",
-                        "test_date": "",
-                        "categories": "",
-                        "tc_number": "",
-                        "note": "",
-                    }
-
-                    for info_field in common_info_fields:
-                        row[info_field] = common_source.get(info_field, "")
-
-                    for folder_name in folder_names:
-                        result = self.folder_results.get(folder_name, {}).get(
-                            file_name_key,
-                            {
-                                "status": "MISSING",
-                                "details": "File not found.",
-                            },
-                        )
-                        row[f"{folder_name}_status"] = result.get("status", "")
-                        row[f"{folder_name}_details"] = result.get("details", "")
-                    writer.writerow(row)
+            if extension != ".xlsx":
+                file_name += ".xlsx"
+            self._export_results_excel(file_name, fieldnames, rows)
 
             QMessageBox.information(self, "Success", "Results exported successfully.")
         except Exception as e:
