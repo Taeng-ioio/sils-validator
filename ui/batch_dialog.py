@@ -228,7 +228,7 @@ class BatchResultDialog(QDialog):
         self.category_filter_combo.blockSignals(False)
 
     def _is_diff_row(self, file_name):
-        row_results = []
+        row_statuses = []
         for folder_name in self._folder_names():
             result = self.folder_results.get(folder_name, {}).get(
                 file_name,
@@ -237,8 +237,8 @@ class BatchResultDialog(QDialog):
                     "details": "File not found.",
                 },
             )
-            row_results.append((result.get("status", ""), result.get("details", "")))
-        return len(set(row_results)) > 1
+            row_statuses.append(result.get("status", ""))
+        return len(set(row_statuses)) > 1
 
     def apply_filters(self, *_):
         selected_category = self.category_filter_combo.currentText() or "All"
