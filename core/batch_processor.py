@@ -60,9 +60,7 @@ class BatchProcessor:
             else:
                 result_entry["status"] = "FAIL"
                 failed_rules = [r["rule_desc"] for r in check_results if r["status"] == "FAIL"]
-                result_entry["details"] = f"{fail_count} failures: " + ", ".join(failed_rules[:3])
-                if len(failed_rules) > 3:
-                    result_entry["details"] += "..."
+                result_entry["details"] = "\n".join(failed_rules)
         except Exception as e:
             result_entry["status"] = "ERROR"
             result_entry["details"] = str(e)

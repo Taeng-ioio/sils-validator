@@ -146,6 +146,7 @@ class BatchResultDialog(QDialog):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setWordWrap(True)
         self.table.verticalHeader().setVisible(False)
         self.table.verticalHeader().setDefaultSectionSize(36)
         self.layout.addWidget(self.table)
@@ -259,7 +260,7 @@ class BatchResultDialog(QDialog):
 
         header = self.table.horizontalHeader()
         header.setStretchLastSection(False)
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         for col in range(1, len(headers) - 1):
             if col % 2 == 1:
                 header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
@@ -432,3 +433,4 @@ class BatchResultDialog(QDialog):
             self.parent().inspect_from_batch(full_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found in first folder: {file_name}")
+ame}")
