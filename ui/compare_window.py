@@ -214,15 +214,10 @@ class BatchCompareWindow(MainWindow):
         self.data_display_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         viz_layout.addWidget(self.data_display_label)
 
-        self.compare_scroll = QScrollArea()
-        self.compare_scroll.setWidgetResizable(True)
-        self.compare_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        self.compare_container = QWidget()
-        self.compare_layout = QVBoxLayout(self.compare_container)
-        self.compare_layout.setContentsMargins(0, 0, 0, 0)
-        self.compare_layout.setSpacing(12)
-        self.compare_scroll.setWidget(self.compare_container)
-        viz_layout.addWidget(self.compare_scroll)
+        self.compare_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.compare_splitter.setHandleWidth(6)
+        self.compare_splitter.setChildrenCollapsible(False)
+        viz_layout.addWidget(self.compare_splitter, 1)
 
         right_splitter.addWidget(viz_container)
 
@@ -385,7 +380,9 @@ class BatchCompareWindow(MainWindow):
                 empty_label.setStyleSheet("color: #999;")
                 group_layout.addWidget(empty_label)
 
-            self.compare_layout.addWidget(group)
+            group.setMinimumHeight(220)
+            self.compare_splitter.addWidget(group)
+            self.compare_splitter.setStretchFactor(index, 1)
             self.compare_views.append(
                 {
                     "folder_name": folder_name,
@@ -395,8 +392,6 @@ class BatchCompareWindow(MainWindow):
                     "data_label": data_label,
                 }
             )
-
-        self.compare_layout.addStretch()
 
         sorted_topics = sorted(all_topics)
         self.topic_combo.clear()
