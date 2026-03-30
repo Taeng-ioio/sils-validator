@@ -433,4 +433,3 @@ class BatchResultDialog(QDialog):
             self.parent().inspect_from_batch(full_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found in first folder: {file_name}")
-ame}")
