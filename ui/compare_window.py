@@ -246,18 +246,12 @@ class BatchCompareWindow(MainWindow):
         layout.addWidget(splitter)
 
     def _clear_compare_views(self):
-        while self.compare_layout.count():
-            item = self.compare_layout.takeAt(0)
-            widget = item.widget()
-            child_layout = item.layout()
-            if widget is not None:
-                widget.deleteLater()
-            elif child_layout is not None:
-                while child_layout.count():
-                    child_item = child_layout.takeAt(0)
-                    child_widget = child_item.widget()
-                    if child_widget is not None:
-                        child_widget.deleteLater()
+        while self.compare_splitter.count():
+            widget = self.compare_splitter.widget(0)
+            if widget is None:
+                break
+            widget.setParent(None)
+            widget.deleteLater()
 
     def update_rule_topics(self):
         topics = sorted(
