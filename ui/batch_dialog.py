@@ -207,6 +207,13 @@ class BatchResultDialog(QDialog):
         self.category_filter_combo.setEnabled(False)
         self.category_filter_combo.blockSignals(False)
 
+    def _reset_diff_filter(self):
+        self.diff_only_enabled = False
+        self.diff_only_btn.blockSignals(True)
+        self.diff_only_btn.setChecked(False)
+        self.diff_only_btn.setEnabled(False)
+        self.diff_only_btn.blockSignals(False)
+
     def _refresh_category_filter_options(self):
         selected = self.category_filter_combo.currentText() or "All"
         all_categories = sorted(
@@ -407,7 +414,7 @@ class BatchResultDialog(QDialog):
         self.export_btn.setEnabled(True)
 
         for file_name, row in self.file_row_map.items():
-            common_source = None
+            collected_categories = set()
             for folder_name in self._folder_names():
                 folder_map = self.folder_results.get(folder_name, {})
                 if file_name not in folder_map:
@@ -420,14 +427,13 @@ class BatchResultDialog(QDialog):
                             "details": "File not found.",
                         },
                     )
-                elif common_source is None:
-                    candidate = folder_map.get(file_name)
-                    if candidate and candidate.get("status") != "MISSING":
-                        common_source = candidate
+                else:
+                    candidate = folder_map.get(file_name) or {}
+                    collected_categories.update(
+                        self._parse_categories(candidate.get("categories", ""))
+                    )
 
-            self.file_categories[file_name] = set(
-                self._parse_categories((common_source or {}).get("categories", ""))
-            )
+            self.file_categories[file_name] = collected_categories
 
         self._refresh_category_filter_options()
         self.diff_only_btn.setEnabled(len(self._folder_names()) > 1)
