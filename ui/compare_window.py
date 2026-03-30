@@ -68,20 +68,23 @@ class BatchCompareWindow(MainWindow):
         self.setCentralWidget(main_widget)
 
         layout = QVBoxLayout(main_widget)
-        layout.setSpacing(15)
+        layout.setSpacing(10)
         layout.setContentsMargins(20, 20, 20, 20)
 
         top_bar = QHBoxLayout()
-        top_bar.setSpacing(10)
+        top_bar.setSpacing(8)
 
-        compare_title = QLabel(f"Batch Compare: {self.compare_name}")
-        compare_title.setStyleSheet("font-weight: bold; font-size: 15px;")
+        compare_title = QLabel("Batch Compare")
+        compare_title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        compare_title.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+
         self.file_label = QLabel(self.compare_name)
-        self.file_label.setStyleSheet("color: #666; font-style: italic; margin-left: 10px;")
+        self.file_label.setStyleSheet("color: #666; font-style: italic;")
+        self.file_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.file_label.setMaximumHeight(22)
 
         top_bar.addWidget(compare_title)
-        top_bar.addWidget(self.file_label)
-        top_bar.addStretch()
+        top_bar.addWidget(self.file_label, 1)
         layout.addLayout(top_bar)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
