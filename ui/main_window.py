@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.current_file_index = -1
         self.recent_config = None
         self.batch_dialog = None
+        self.batch_compare_windows = []
         
         self.dat_folder_path = None
         self.dat_file_map = {} # Maps base name (e.g., 'AAAA') to absolute path
@@ -1362,6 +1363,17 @@ class MainWindow(QMainWindow):
         scroll_area.setWidget(content_widget)
         
         layout.addWidget(scroll_area)
+        
+        close_btn = QPushButton("닫기")
+        close_btn.clicked.connect(dialog.accept)
+        close_btn.setMinimumHeight(40)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet("font-weight: bold; background-color: #28a745; color: white; border-radius: 5px;")
+        
+        layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        dialog.exec()
+
         
         close_btn = QPushButton("닫기")
         close_btn.clicked.connect(dialog.accept)

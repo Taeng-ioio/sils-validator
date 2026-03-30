@@ -149,6 +149,7 @@ class BatchResultDialog(QDialog):
 
         self.category_filter_combo = QComboBox()
         self.category_filter_combo.addItem("All")
+        self.category_filter_combo.setMinimumWidth(240)
         self.category_filter_combo.setEnabled(False)
         self.category_filter_combo.currentTextChanged.connect(self.apply_filters)
         filter_layout.addWidget(self.category_filter_combo)
@@ -582,17 +583,28 @@ class BatchResultDialog(QDialog):
         if not self.selected_folders:
             return
 
-        first_folder = self.selected_folders[0]["path"]
-        full_path = None
-        for root, _, files in os.walk(first_folder):
-            for file in files:
-                if file == file_name and file.lower().endswith((".xlsx", ".xls", ".csv")):
-                    full_path = os.path.join(root, file)
-                    break
-            if full_path:
-                break
+        compare_entries = []
+        for entry in self.selected_folders:
+            folder_name = entry["name"]
+            folder_path = entry["path"]
+            matched_path = None
 
-        if full_path and os.path.exists(full_path):
-            self.parent().inspect_from_batch(full_path)
+            for root, _, files in os.walk(folder_path):
+                for file in files:
+                    if file == file_name and file.lower().endswith((".xlsx", ".xls", ".csv")):
+                        matched_path = os.path.join(root, file)
+                        break
+                if matched_path:
+                    break
+
+            compare_entries.append(
+                {
+                    "folder_name": folder_name,
+                    "path": matched_path,
+                }
+            )
+
+        if any(entry.get("path") for entry in compare_entries):
+            self.parent().inspect_from_batch_compare(file_name, compare_entries)
         else:
-            QMessageBox.warning(self, "Error", f"File not found in first folder: {file_name}")
+            QMessageBox.warning(self, "Error", f"File not found in selected folders: {file_name}")
