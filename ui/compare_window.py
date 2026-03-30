@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QSpinBox,
     QScrollArea,
+    QSizePolicy,
 )
 from PyQt6.QtCore import Qt, QDate
 
