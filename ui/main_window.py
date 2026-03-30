@@ -1069,6 +1069,20 @@ class MainWindow(QMainWindow):
             
         self._load_file_from_path(file_path)
 
+    def inspect_from_batch_compare(self, compare_name, compare_entries):
+        from ui.compare_window import BatchCompareWindow
+
+        compare_window = BatchCompareWindow(
+            compare_name,
+            compare_entries,
+            shared_logic=self.inspector_logic,
+            parent=self,
+        )
+        compare_window.show()
+        compare_window.raise_()
+        compare_window.activateWindow()
+        self.batch_compare_windows.append(compare_window)
+
     def _load_file_from_path(self, file_name):
         # Save current state before loading new one (if we have a current file)
         if self.current_excel_path:
