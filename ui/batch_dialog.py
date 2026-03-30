@@ -372,7 +372,7 @@ class BatchResultDialog(QDialog):
                     ]
                 )
 
-            with open(file_name, "w", newline="", encoding="utf-8") as f:
+            with open(file_name, "w", newline="", encoding="utf-8-sig") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
 
